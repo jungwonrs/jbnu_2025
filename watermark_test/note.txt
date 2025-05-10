@@ -3,3 +3,10 @@ pip install git+https://github.com/VLL-HD/FrEIA.git
 python -m pip install --upgrade pip
 
 .venv\Scripts\activate
+
+
+(안될경우)
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process 
+
+(동작실행)
+.venv\Scripts\Activate.ps1 
