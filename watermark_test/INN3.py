@@ -10,6 +10,10 @@ assert Path(IMG_PATH).exists(), "이미지 준비!"
 orig_img = cv2.resize(cv2.imread(IMG_PATH,0),(64,64)).astype(np.float32)/255.
 wm_str   = "seo12345"
 bin_str  = ''.join(f'{ord(c):08b}' for c in wm_str).ljust(64,'0')
+
+'''
+이미지 형태의 워터마크 데이터로 처리하기 위해서 배열화 진행
+'''
 wm_bits  = np.fromiter(bin_str, int).reshape(8,8)*255
 
 # ---------- 2. DWT  --------------------------------------------------
