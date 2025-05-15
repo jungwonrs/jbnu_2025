@@ -1,0 +1,11 @@
+[package]
+name = "chameleon-hash"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+num-bigint = { version = "0.2.6" }
+num-primes = "0.3.0"
+num-traits = "0.2.19"
+rand = "0.8.5"
+serde = { version = "1.0.214", features = ["serde_derive"] }

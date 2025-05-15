@@ -1,0 +1,33 @@
+#+title: Chameleon Hash
+
+
+* Introduction
++ [[https://eprint.iacr.org/1998/010][Research Paper]]
+
+* Time elapsed
++ 160-bits
+#+begin_src log
+Testing Chameleon Hash with 160 bits
+Time elapsed(Setup): 1473us
+Time elapsed(Hash): 741us
+Time elapsed(Verification): 725us
+Time elapsed(Finding Collision): 10us
+Time elapsed(Hash): 1121us
+Total time elapsed: 4091us
+
+Testing Chameleon Hash with 1024 bits
+Time elapsed(Setup): 103544us
+Time elapsed(Hash): 64826us
+Time elapsed(Verification): 56809us
+Time elapsed(Finding Collision): 104us
+Time elapsed(Hash): 83262us
+Total time elapsed: 308610us
+
+Testing Chameleon Hash with 2048 bits
+Time elapsed(Setup): 396065us
+Time elapsed(Hash): 390736us
+Time elapsed(Verification): 397945us
+Time elapsed(Finding Collision): 247us
+Time elapsed(Hash): 648850us
+Total time elapsed: 1833912us
+#+end_src
