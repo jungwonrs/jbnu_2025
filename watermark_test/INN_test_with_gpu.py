@@ -124,6 +124,13 @@ Ff.InputNode:
 '''
 nodes = [Ff.InputNode(input_dim, name='in')]
 
+nodes.append(
+    Ff.Node(nodes[-1],
+            Fm.PermuteRandom,
+            {'seed': 0},
+            name='perm0')
+)
+
 '''
 GLOWCouplingBlock을 그래프에 추가하는 코드
 입력 벡터를 반으로 나눈 뒤, 그 중 절반을 기준으로 나머지를 subnet을 이용해 변형해라
@@ -155,7 +162,7 @@ for i in range(num_block):
             Fm.GLOWCouplingBlock,
             {
                 'subnet_constructor': subnet,
-                'clamp': 1.0
+                'clamp': 0.5
             },
             name = f'cb{i}'
         )
@@ -171,6 +178,12 @@ nodes.append(Ff.OutputNode(nodes[-1], name='out'))
 하나의 ReversibleGraphNet(가역 신경망 모델) 객체를 생성
 '''
 inn = Ff.ReversibleGraphNet(nodes).to(device)
+
+for m in inn.modules():
+    if isinstance(m, nn.Linear):
+        nn.init.kaiming_uniform_(m.weight, a=0.1)  # 평균 0, 분산 유지
+        if m.bias is not None:
+            nn.init.zeros_(m.bias)
 
 # --------3. 학습 ------------------
 
@@ -195,7 +208,9 @@ repeat(64):
    128: 추정치 안정됨, 메모리 시간 부담
    256: 학습 더 안정화
 '''
-batch = x_vec.unsqueeze(0).repeat(32,1)
+noise_std = 5e-4
+x_noisy = x_vec + noise_std * torch.randn_like(x_vec)
+batch = x_noisy.unsqueeze(0).repeat(32, 1)
 
 '''
 pyTorch의 Adam 최적화기 설정
@@ -254,8 +269,9 @@ if ep%100==0: print(f'epoch {ep:3d}  loss={loss.item():.3e}'):
 
 '''
 
-bce = nn.BCEWithLogitsLoss()
-y   = 10
+bce = nn.BCEWithLogitsLoss(reduction='mean')
+y   = 0.05
+opt = optim.Adam(inn.parameters(), lr=1e-4)
 
 LH_size = LH.size
 HL_size = HL.size
@@ -267,7 +283,7 @@ wm_target = torch.tensor(wm1_flat[:wm_len],
                          dtype=torch.float32,
                          device=device).unsqueeze(0).repeat(batch_sz, 1)
 
-for ep in range(2000):
+for ep in range(1):
     out   = inn(batch)[0]
     recon = inn(out, rev=True)[0]
 
@@ -276,7 +292,10 @@ for ep in range(2000):
     loss_img  = loss_fn(recon, batch)
     loss_bit  = bce(pred_bits, wm_target)
     loss = loss_img + y*loss_bit
-    opt.zero_grad(); loss.backward(); opt.step()
+    opt.zero_grad()
+    loss.backward() 
+    torch.nn.utils.clip_grad_norm_(inn.parameters(), 1.0)
+    opt.step()
     if ep%100==0: 
         print(f'epoch {ep:3d}  loss={loss.item():.3e}')
 
