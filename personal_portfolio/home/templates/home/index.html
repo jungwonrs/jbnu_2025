@@ -1,0 +1,40 @@
+{% extends "home/base.html" %}
+
+{% block title %}Projects | Fake Portfolio{% endblock %}
+
+{% block content %}
+<section id="hero">
+  <h2>Hello, I'm John&nbsp;Doe 👋</h2>
+  <p>Full-stack hobbyist who loves turning coffee into code.</p>
+</section>
+
+<section id="projects">
+  <h2>Featured Projects</h2>
+  <div class="grid">
+    {% for p in projects %}
+      <article class="card">
+        <img src="{{ p.image }}" alt="{{ p.title }}">
+        <h3>{{ p.title }}</h3>
+        <p>{{ p.description }}</p>
+        {% if p.url %}
+          <a class="btn" href="{{ p.url }}" target="_blank">View Source</a>
+        {% endif %}
+      </article>
+    {% endfor %}
+  </div>
+</section>
+
+<section id="skills">
+  <h2>Skills</h2>
+  <ul class="skills">
+    <li>Python</li><li>Django</li><li>JavaScript</li>
+    <li>React</li><li>SQL Basics</li><li>Git & GitHub</li>
+  </ul>
+</section>
+
+<section id="contact">
+  <h2>Contact</h2>
+  <p>Email: <a href="mailto:john@example.com">john@example.com</a></p>
+  <p>LinkedIn: <a href="#">linkedin.com/in/johndoe</a></p>
+</section>
+{% endblock %}

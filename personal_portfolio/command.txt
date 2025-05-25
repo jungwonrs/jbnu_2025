@@ -1,0 +1,2 @@
+(안될경우)
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process 
