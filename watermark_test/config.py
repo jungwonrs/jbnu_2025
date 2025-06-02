@@ -15,6 +15,10 @@ BLOCKS      = 20
 LR          = 1e-4
 LAM_Z       = 0.5          # loss 가중치
 LAM_J       = 1.0
+IMP_TYPE      = 'grad'      # 'grad' | 'none'
+IMP_SOBEL_K   = 3           # 3 or 5
+IMP_REFRESH   = 10          # build_importance_map 호출 주기 (step)
+IMP_GAIN      = 5.0         # loss =  LAM_Z * IMP_GAIN * loss_img
 
 # ▣ DWT / GPU --------------------------------------------------
 WAVELET     = "haar"

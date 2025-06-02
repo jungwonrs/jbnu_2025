@@ -196,7 +196,7 @@ if combine_BC:
 
 # ───────── 시각화 ─────────
 titles = ('Cover', 'Stego-A', 'Stego-BC', 'Stego-Full')
-cover_coeff = torch.from_numpy(np.stack([LHn, HLn], 0)).unsqueeze(0).float() 
+cover_coeff = torch.from_numpy(np.stack([LHn, HLn], 0, dtype=np.float32)).unsqueeze(0).to(DEVICE)
 coeffs  = (cover_coeff, stegoA, stegoBC_coeff, stegoF)
 
 rows,cols = 4,4
