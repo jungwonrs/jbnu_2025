@@ -120,7 +120,11 @@ def train_inn(img_count, batch_size, epoches):
             optimizer.step()
             epoch_loss += loss.item() * x.size(0)
         print(f"Epoch {epoch}: NLL = {epoch_loss / len(dataset):.4f}")
-    torch.save({"state_dict": model.state_dict(), "in_shape": (2, 128, 128)}, save_path)
+    torch.save({
+        "state_dict": model.state_dict(), 
+        "in_shape": (2, 128, 128),
+        "num_blocks": 20
+        }, save_path)
     end_time = time.time()
     elapsed = end_time - start_time
     print(f"\n총 학습 시간: {elapsed:.2f}초 ({elapsed/60:.2f}분)")
