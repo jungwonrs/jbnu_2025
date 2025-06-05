@@ -140,7 +140,8 @@ def train(tag: str, tensors: torch.Tensor):
         print(f'[{tag}] Ep{ep}/{EPOCHS} NLL={tot/len(tensors):.4f}')
     elapsed = time.time() - t0
     print(f'[{tag}] {elapsed:.1f}s')
-
+    
+    
     folder = os.path.join(MODEL_DIR, tag)
     os.makedirs(folder, exist_ok=True)
 
@@ -149,6 +150,7 @@ def train(tag: str, tensors: torch.Tensor):
         'in_shape': (C, H, W),
         'num_blocks': BLOCKS
     }, os.path.join(folder, f'inn_{tag}.pth'))
+    
 
     # ⏱️ 시간도 별도 기록
     with open(os.path.join(folder, 'train_time.txt'), 'w', encoding='utf-8') as f:
