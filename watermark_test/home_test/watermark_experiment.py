@@ -1,10 +1,3 @@
-일단 기존에 준 watermark_experiment 코드에서
-
-내가 watermark embedding 부분만 좀 refactoring 해봤거든?
-근데 좀 꼬인거 같어
-
-확인좀 해줘
-
 import os, cv2, pywt, torch, random, numpy as np
 from skimage.metrics import peak_signal_noise_ratio as psnr
 from skimage.metrics import structural_similarity as ssim
