@@ -1,4 +1,4 @@
-import os, random, pywt, torch, cv2, numpy as np
+import os, random, pywt, torch, cv2, logging, sys, time, numpy as np
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
@@ -9,6 +9,16 @@ from tqdm import tqdm
 from config import *
 
 IMP_W = None
+
+logging.basicConfig(
+    level=logging.INFO,                                 
+    format="%(asctime)s %(message)s",                   
+    handlers=[
+        logging.FileHandler("log.txt", mode="a", encoding="utf-8"),  
+        logging.StreamHandler(sys.stdout)                             
+    ]
+)
+logger = logging.getLogger(__name__)
 
 # ────────── INN 정의 ──────────
 
@@ -59,6 +69,8 @@ sign_ste = SignSTE.apply
 def train(tag, tensors, build_inn):
     global IMP_W
     IMP_W = None
+
+    t_start = time.perf_counter()
 
     loader = torch.utils.data.DataLoader(
         tensors,
@@ -166,7 +178,9 @@ def train(tag, tensors, build_inn):
             opt.step()
             epoch_loss += loss.item() * x.size(0)
 
-        print(f"[{tag}] Ep{ep:03d}/{EPOCHS} ({phase}) loss={epoch_loss/len(tensors):.4f}", flush=True)
+        logger.info(f"[{tag}] Ep{ep:03d}/{EPOCHS} ({phase})"f"loss={epoch_loss/len(tensors):.4f}")
+
+        #print(f"[{tag}] Ep{ep:03d}/{EPOCHS} ({phase}) loss={epoch_loss/len(tensors):.4f}", flush=True)
 
     save_dir = os.path.join(MODEL_DIR, tag)
     os.makedirs(save_dir, exist_ok=True)
@@ -174,6 +188,13 @@ def train(tag, tensors, build_inn):
                 'in_shape' : (C, H, W),
                 'num_blocks': BLOCKS},
                os.path.join(save_dir, f"inn_{tag}.pth"))
+    
+    if torch.cuda.is_available():
+        torch.cuda.synchronize()
+
+    elapsed = time.perf_counter() - t_start
+    logger.info(f"[{tag}] Training finished in {elapsed/60:.2f} min " f"({elapsed:.1f} s)")
+
     return net
 
 # ────────── 이미지 처리 함수들 ──────────
@@ -209,7 +230,7 @@ def make_wm_bits (len_bits, seed, shape):
 # build_importance_map, sobel_kernel은
 # 사람이 잘 보는 부분/잘 안 보는 부분을 "수치적으로" 구별해서, 워터마크를 “덜 티나게” 심거나, "효과적으로" 임베딩
 @torch.no_grad()
-def build_importance_map(batch, k=IMP_SOBEL_K, eps=1e-6):
+def build_importance_map(batch, k=3, eps=1e-6):
     lum = batch[:,1:3].mean(1, keepdim=True) if batch.size(1)>=3 else batch.mean(1, keepdim=True)
     kx, ky = sobel_kernel(k)
     kx, ky = kx.to(batch), ky.to(batch)

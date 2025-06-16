@@ -1,0 +1,53 @@
+import torch, os
+ROOT        = os.path.join(os.path.dirname(__file__), "coco") 
+TRAIN_JSON  = os.path.join(ROOT, r"annotations\instances_train2017.json")
+TRAIN_DIR   = os.path.join(ROOT, "train2017")
+TEST_DIR    = os.path.join(os.path.dirname(__file__), "images")
+MODEL_DIR = 'C:\\Users\\seo\\Desktop\\watermark_experiment\\LAM_Z0.05_LAM_J0.05_IMP_GAIN1.5_WM_STRENGTH0.5_BETA60_WM_LEN256_WM_SEED42_SCALE_LOGIT30_LAMBDA_CLEAN0.08\\LAM_Z0.05_LAM_J0.05_IMP_GAIN1.5_WM_STRENGTH0.85_BETA90_WM_LEN256_WM_SEED42_SCALE_LOGIT45_LAMBDA_CLEAN0.05'
+
+#MODEL_DIR = r'.'
+
+
+# model settings
+N_IMG = 1000
+BLOCKS = 4
+BATCH = 4
+EPOCHS = 15
+EPOCHS_A = 5
+EPOCHS_B = EPOCHS -EPOCHS_A
+LR          = 2e-4
+LAM_Z = 0.05
+LAM_J = 0.05
+BETA = 90
+IMP_GAIN = 1.5
+LAMBDA_CLEAN = 0.05
+
+# watermark settings 
+WM_STRENGTH = 0.85
+WM_LEN = 256
+WM_SEED = 42
+SCALE_LOGIT = 45
+
+# util settings
+WAVELET     = "haar"
+DEVICE      = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+# watermark embedding & extracting
+TEST_N_IMG = 3
+
+# attack config
+
+JPEG_Q = [70]
+GB_SIG = [2.0]
+RS_SCALES = [0.7]
+CR_PCTS = [0.8]
+GN_SIGMA = [0.03]
+
+
+'''
+JPEG_Q = [50, 60, 70, 80, 90]
+GB_SIG = [0.5, 1.0, 2.0, 3.0, 4.0, 5.0]
+RS_SCALES = [0.5,0.6,0.7,0.8,0.9]
+CR_PCTS = [0.6,0.7,0.8,0.9]
+GN_SIGMA = [0.01, 0.02, 0.03, 0.05, 0.06, 0.07]
+'''
