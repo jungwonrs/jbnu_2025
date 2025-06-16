@@ -3,7 +3,7 @@ ROOT        = os.path.join(os.path.dirname(__file__), "coco")
 TRAIN_JSON  = os.path.join(ROOT, r"annotations\instances_train2017.json")
 TRAIN_DIR   = os.path.join(ROOT, "train2017")
 TEST_DIR    = os.path.join(os.path.dirname(__file__), "images")
-MODEL_DIR = 'C:\\Users\\seo\\Desktop\\watermark_experiment\\LAM_Z0.05_LAM_J0.05_IMP_GAIN1.5_WM_STRENGTH0.5_BETA60_WM_LEN256_WM_SEED42_SCALE_LOGIT30_LAMBDA_CLEAN0.08\\LAM_Z0.05_LAM_J0.05_IMP_GAIN1.5_WM_STRENGTH0.85_BETA90_WM_LEN256_WM_SEED42_SCALE_LOGIT45_LAMBDA_CLEAN0.05'
+MODEL_DIR = 'C:\\Users\\seo\\Desktop\\watermark_experiment\\LAM_Z0.05_LAM_J0.1_IMP_GAIN1.5_WM_STRENGTH0.85_BETA90_WM_LEN256_WM_SEED42_SCALE_LOGIT45_LAMBDA_CLEAN0.05'
 
 #MODEL_DIR = r'.'
 
@@ -17,7 +17,7 @@ EPOCHS_A = 5
 EPOCHS_B = EPOCHS -EPOCHS_A
 LR          = 2e-4
 LAM_Z = 0.05
-LAM_J = 0.05
+LAM_J = 0.1
 BETA = 90
 IMP_GAIN = 1.5
 LAMBDA_CLEAN = 0.05

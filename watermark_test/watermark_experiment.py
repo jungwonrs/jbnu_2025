@@ -204,29 +204,28 @@ def extract(coeff, model, two_ch, z_base):
 
 @torch.no_grad()
 def extract_two_nets(coeff, net_lh, net_hl, z_base_lh, z_base_hl):
-    
-    LH = coeff[:, 0:1]
-    coeff_lh = torch.cat([LH, LH], 1)
+
+    coeff_lh = torch.cat([coeff[:, 0:1]]*2, 1)
     map_lh = extract(coeff_lh, net_lh, True, z_base_lh)[0]
 
-    HL = coeff[:, 1:2]
-    coeff_hl = torch.cat([HL, HL], 1)
-    map_hl = extract(coeff_hl, net_hl, True, z_base_hl)[0]
+    coeff_hl = torch.cat([coeff[:, 1:2]]*2, 1)
+    map_hl = extract(coeff_hl, net_hl, True, z_base_hl)[1]
 
-    return np.array([map_lh, map_hl], 0).astype(np.uint8)
+    return np.stack([map_lh, map_lh], axis=0).astype(np.uint8)
 
 # ────────── 워터마크 평가 ──────────
 def wm_metrics(pred, gt):
-    if gt.ndim == 3:
-        gt = (gt.mean(axis=(1, 2)) > 0.5).astype(np.uint8)
+    assert pred.shape == gt.shape, "shape mismatch!"
 
     # 정확도 & BER
     acc = (pred == gt).mean()
     ber = 1.0 - acc
     
     # NC 
-    pred_bipolar = pred.astype(np.int8) * 2 - 1
-    gt_bipolar = gt.astype(np.int8) * 2- 1
+    pred = pred.astype(np.int8)
+    gt = gt.astype(np.int8)
+    pred_bipolar = pred * 2 - 1
+    gt_bipolar = gt * 2 - 1
     nc = (pred_bipolar * gt_bipolar).mean()
 
     return acc, ber, nc
