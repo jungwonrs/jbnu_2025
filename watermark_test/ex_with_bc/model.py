@@ -55,21 +55,8 @@ def build_inn(C, H, W):
 
 # ────────── INN 학습 ──────────
 
-# 학습을 위한 비트 임베딩 및 이진화 연산을 통해 학습
-class SignSTE(torch.autograd.Function):
-    @staticmethod
-    def forward(_, x):
-        return x.sign()
-    @staticmethod
-    def backward(_, g):
-        return g          
-sign_ste = SignSTE.apply
-
 # Model 학습
 def train(tag, tensors, build_inn):
-    global IMP_W
-    IMP_W = None
-
     t_start = time.perf_counter()
 
     loader = torch.utils.data.DataLoader(
@@ -110,14 +97,15 @@ def train(tag, tensors, build_inn):
                 # Loss A = 기본 손실 값 + 0.05 * z[:, wm_ch].pow(2).mean()
                 # 워터마킹이 쉽고 안정적으로 심어지도록
                 loss += 0.05 * z[:, wm_ch].pow(2).mean()
-                if IMP_W is None and step == 1:
-                    IMP_W = build_importance_map(x)
 
             else:
+                imp_scaled = 0.5 + 0.5 * build_importance_map(x).to(DEVICE)  # (1,1,H,W)
+                imp_scaled = imp_scaled.expand(x.size(0), 1, H, W)           # (B,1,H,W)
                 z_emb = z.clone()
+
+                wm = wm_sign.unsqueeze(0) * imp_scaled
+
                 for ch in wm_ch:
-                    imp_scaled = (0.5 + 0.5 * IMP_W.to(DEVICE))
-                    wm = wm_sign.unsqueeze(0) * imp_scaled
                     z_emb[:, ch] += wm.squeeze(1)
                 
                 x_stego, _ = net(z_emb, rev=True, jac=True)
@@ -179,8 +167,6 @@ def train(tag, tensors, build_inn):
             epoch_loss += loss.item() * x.size(0)
 
         logger.info(f"[{tag}] Ep{ep:03d}/{EPOCHS} ({phase})"f"loss={epoch_loss/len(tensors):.4f}")
-
-        #print(f"[{tag}] Ep{ep:03d}/{EPOCHS} ({phase}) loss={epoch_loss/len(tensors):.4f}", flush=True)
 
     save_dir = os.path.join(MODEL_DIR, tag)
     os.makedirs(save_dir, exist_ok=True)
@@ -256,28 +242,30 @@ def sobel_kernel(ksize=3):
 
 # JPEG 압축 공격에 사용
 def jpeg_tensor(x_bchw, q):
-    bs = x_bchw.size(0)
-    buf = []
-    for k in range(bs):
-        u8 = (x_bchw[k, 0].clamp(0, 1)*255).detach().cpu().numpy().astype(np.uint8)
-        enc = cv2.imencode('.jpg', u8, [cv2.IMWRITE_JPEG_QUALITY, q])[1]
-        dec = cv2.imdecode(enc, 0).astype(np.float32) / 255.0
-        buf.append(torch.from_numpy(dec))
-    return torch.stack(buf, 0).unsqueeze(1).to(x_bchw.device)
+    # x_bchw: (B, C, H, W), 값 범위 [0,1]
+    bs, C, H, W = x_bchw.shape
+    out = torch.empty_like(x_bchw)
+    for b in range(bs):
+        for ch in range(C):
+            u8 = (x_bchw[b, ch].clamp(0, 1) * 255).detach().cpu().numpy().astype(np.uint8)
+            enc = cv2.imencode('.jpg', u8, [cv2.IMWRITE_JPEG_QUALITY, q])[1]
+            dec = cv2.imdecode(enc, 0).astype(np.float32) / 255.0
+            out[b, ch] = torch.from_numpy(dec)
+    return out.to(x_bchw.device)
 
 
 # ────────── 실행 ──────────
 
 if __name__ == '__main__':
     DS_BOTH = load_tensors('both')
-    DS_LH   = load_tensors('lh')     # B-LH
-    DS_HL   = load_tensors('hl')     # B-HL
-    DS_FULL = load_tensors('full')   # C-모델 (LL+LH+HL+HH)
+    DS_LH   = load_tensors('lh')    
+    DS_HL   = load_tensors('hl')     
+    DS_FULL = load_tensors('full')   
 
-    train('both',  DS_BOTH, build_inn)   # A
-    train('lh',    DS_LH, build_inn)     # B1
-    train('hl',    DS_HL, build_inn)     # B2
-    train('full',  DS_FULL, build_inn)   # C
+    train('both',  DS_BOTH, build_inn)  
+    train('lh',    DS_LH, build_inn)     
+    train('hl',    DS_HL, build_inn)     
+    train('full',  DS_FULL, build_inn)  
 
 '''
 Seed 부분을 개인키로 확장하는 아이디어 추가
