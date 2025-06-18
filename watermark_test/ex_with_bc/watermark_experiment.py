@@ -211,7 +211,7 @@ def extract_two_nets(coeff, net_lh, net_hl, z_base_lh, z_base_hl):
     coeff_hl = torch.cat([coeff[:, 1:2]]*2, 1)
     map_hl = extract(coeff_hl, net_hl, True, z_base_hl)[1]
 
-    return np.stack([map_lh, map_lh], axis=0).astype(np.uint8)
+    return np.stack([map_lh, map_hl], axis=0).astype(np.uint8)
 
 # ────────── 워터마크 평가 ──────────
 def wm_metrics(pred, gt):
@@ -236,7 +236,9 @@ def evaluate(tag, rec_img, coeff_tensor, model, two_ch, z_base, gray, wm_bits_ra
     def _log(msg): logger.info(f"[{tag:5s} | {msg}")
 
     # clean
-    pred = extract(coeff_tensor, model, two_ch, z_base)
+    coeff_from_spatial = spatial2coeff(rec_img, "2" if two_ch else "4")
+    pred = extract(coeff_from_spatial, model, two_ch, z_base)
+
     acc0,ber0,nc0 = wm_metrics(pred, wm_bits_rand)
     _log(f"clean ]  PSNR {p0:6.2f} SSIM {s0:.4f} | ACC {acc0*100:6.2f}% BER {ber0*100:5.2f}% NC {nc0:.3f}")
 
@@ -301,7 +303,9 @@ def evaluate_BC(tag, rec_img, coeff_tensor, net_lh, net_hl, z_base_lh, z_base_hl
     p0,s0 = psnr(gray, base_u8, data_range=255), ssim(gray, base_u8, data_range=255, win_size=7)
     def _log(msg): logger.info(f"[{tag:5s} | {msg}")
 
-    pred = extract_two_nets(coeff_tensor, net_lh, net_hl, z_base_lh, z_base_hl)
+    #pred = extract_two_nets(coeff_tensor, net_lh, net_hl, z_base_lh, z_base_hl)
+    coeff_from_spatial = spatial2coeff(rec_img, "2")
+    pred = extract_two_nets(coeff_from_spatial, net_lh, net_hl, z_base_lh, z_base_hl)
     acc0,ber0,nc0 = wm_metrics(pred, wm_bits_rand)
     _log(f"clean ]  PSNR {p0:6.2f} SSIM {s0:.4f} | ACC {acc0*100:6.2f}% BER {ber0*100:5.2f}% NC {nc0:.3f}")
 
