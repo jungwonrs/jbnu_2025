@@ -10,15 +10,17 @@ LOG_PATH    = ROOT_DIR / "results.txt"
 
 
 GRID = {
-    "LAM_Z"       : [0.05, 0.10],
-    "LAM_J"       : [0.05, 0.10],
-    "IMP_GAIN"    : [1.5, 2],
-    "WM_STRENGTH" : [0.85],
+    "LAM_Z"       : [0.07],
+    "LAM_J"       : [0.04],
+    "IMP_GAIN"    : [1.46],
+    "WM_STRENGTH" : [0.93],
     "BETA"        : [90],
     "WM_LEN"      : [256],
     "WM_SEED"     : [42],
-    "SCALE_LOGIT" : [45],
-    "LAMBDA_CLEAN": [0.05, 0.08],
+    "SCALE_LOGIT" : [43, 44, 46],
+    "LAMBDA_CLEAN": [0.08],
+    'BLOCKS':[6, 10, 15, 20, 25],
+    'EPOCHS':[30, 60, 120, 150],
 }
 
 
@@ -30,6 +32,10 @@ def patch_config(**pairs):
     CONFIG_PATH.write_text(txt, encoding="utf-8")
 
 def run_one(combo: dict, run_idx: int):
+    epochs = combo["EPOCHS"]
+    combo["EPOCHS_A"] = max(1, epochs // 3)      
+    combo["EPOCHS_B"] = epochs - combo["EPOCHS_A"]
+
     tag = "_".join(f"{k}{v}" for k, v in combo.items())
     print(f"\n▶▶ [{run_idx}] {tag}", flush=True)
 

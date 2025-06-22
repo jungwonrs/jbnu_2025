@@ -1,0 +1,201 @@
+### Automated INN Watermark experiment log ###
+
+========== Run 1: LAM_Z0.07_LAM_J0.04_IMP_GAIN1.38_WM_STRENGTH0.93_BETA90_WM_LEN256_WM_SEED42_SCALE_LOGIT46_LAMBDA_CLEAN0.08 ==========
+Train time: 14.3 min | Eval time: 2.1 s
+
+===== AVERAGE OVER ALL IMAGES =====
+Tag      Attack    Avg-PSNR    Avg-SSIM    Avg-acc    Avg-BER   Avg-nc
+A-only   clean        30.33      0.8503     1.0000     0.0000    1.000
+A-only   jpeg70       29.50      0.8184     0.6646     0.3354    0.329
+A-only   blur2.0      25.85      0.7432     0.5028     0.4972    0.006
+A-only   res70        28.98      0.8593     0.5805     0.4195    0.161
+A-only   crop80       15.39      0.3214     0.4953     0.5047   -0.009
+A-only   noise3       27.40      0.6803     0.6741     0.3259    0.348
+B+C      clean        29.39      0.7605     0.8104     0.1896    0.621
+B+C      jpeg70       28.48      0.7216     0.7346     0.2654    0.469
+B+C      blur2.0      25.78      0.7390     0.5187     0.4813    0.037
+B+C      res70        28.66      0.8250     0.6107     0.3893    0.221
+B+C      crop80       15.40      0.3036     0.5103     0.4897    0.021
+B+C      noise3       26.94      0.6343     0.7459     0.2541    0.492
+Full     clean        26.96      0.8154     1.0000     0.0000    1.000
+Full     jpeg70       26.41      0.7730     0.6593     0.3407    0.319
+Full     blur2.0      24.64      0.7149     0.4912     0.5088   -0.018
+Full     res70        26.74      0.8205     0.5670     0.4330    0.134
+Full     crop80       15.34      0.3145     0.4920     0.5080   -0.016
+Full     noise3       25.39      0.6604     0.6602     0.3398    0.320
+
+
+========== Run 2: LAM_Z0.07_LAM_J0.04_IMP_GAIN1.38_WM_STRENGTH0.93_BETA90_WM_LEN256_WM_SEED42_SCALE_LOGIT47_LAMBDA_CLEAN0.08 ==========
+Train time: 14.5 min | Eval time: 2.2 s
+
+===== AVERAGE OVER ALL IMAGES =====
+Tag      Attack    Avg-PSNR    Avg-SSIM    Avg-acc    Avg-BER   Avg-nc
+A-only   clean        29.63      0.8398     1.0000     0.0000    1.000
+A-only   jpeg70       28.37      0.8030     0.6971     0.3029    0.394
+A-only   blur2.0      24.50      0.6574     0.5161     0.4839    0.032
+A-only   res70        27.91      0.8202     0.5863     0.4137    0.173
+A-only   crop80       14.19      0.2596     0.4982     0.5018   -0.004
+A-only   noise3       27.03      0.7127     0.7216     0.2784    0.443
+B+C      clean        29.58      0.8207     0.7401     0.2599    0.480
+B+C      jpeg70       28.15      0.7720     0.6492     0.3508    0.298
+B+C      blur2.0      24.49      0.6568     0.5031     0.4969    0.006
+B+C      res70        27.94      0.8199     0.5144     0.4856    0.029
+B+C      crop80       14.21      0.2636     0.5102     0.4898    0.020
+B+C      noise3       27.00      0.7026     0.6466     0.3534    0.293
+Full     clean        29.99      0.8722     1.0000     0.0000    1.000
+Full     jpeg70       28.04      0.8223     0.6508     0.3492    0.302
+Full     blur2.0      23.81      0.6162     0.5373     0.4627    0.075
+Full     res70        26.30      0.7727     0.6167     0.3833    0.233
+Full     crop80       14.17      0.2538     0.4989     0.5011   -0.002
+Full     noise3       27.27      0.7382     0.6838     0.3162    0.368
+
+
+========== Run 3: LAM_Z0.07_LAM_J0.04_IMP_GAIN1.38_WM_STRENGTH0.94_BETA90_WM_LEN256_WM_SEED42_SCALE_LOGIT46_LAMBDA_CLEAN0.08 ==========
+Train time: 14.7 min | Eval time: 2.3 s
+
+===== AVERAGE OVER ALL IMAGES =====
+Tag      Attack    Avg-PSNR    Avg-SSIM    Avg-acc    Avg-BER   Avg-nc
+A-only   clean        30.21      0.7936     1.0000     0.0000    1.000
+A-only   jpeg70       29.19      0.7660     0.7692     0.2308    0.538
+A-only   blur2.0      24.45      0.7549     0.5392     0.4608    0.078
+A-only   res70        28.18      0.8388     0.6320     0.3680    0.264
+A-only   crop80       13.35      0.3498     0.4973     0.5027   -0.005
+A-only   noise3       27.41      0.6538     0.7872     0.2128    0.574
+B+C      clean        26.08      0.5966     0.9929     0.0071    0.986
+B+C      jpeg70       25.63      0.5798     0.8807     0.1193    0.761
+B+C      blur2.0      24.46      0.7562     0.5551     0.4449    0.110
+B+C      res70        27.50      0.7834     0.6300     0.3700    0.260
+B+C      crop80       13.32      0.3006     0.5091     0.4909    0.018
+B+C      noise3       24.81      0.5385     0.8466     0.1534    0.693
+Full     clean        27.14      0.7855     1.0000     0.0000    1.000
+Full     jpeg70       26.32      0.7427     0.7026     0.2974    0.405
+Full     blur2.0      23.14      0.6877     0.5536     0.4464    0.107
+Full     res70        25.40      0.7624     0.6255     0.3745    0.251
+Full     crop80       13.26      0.3329     0.4794     0.5206   -0.041
+Full     noise3       25.53      0.6416     0.6246     0.3754    0.249
+
+
+========== Run 4: LAM_Z0.07_LAM_J0.04_IMP_GAIN1.38_WM_STRENGTH0.94_BETA90_WM_LEN256_WM_SEED42_SCALE_LOGIT47_LAMBDA_CLEAN0.08 ==========
+Train time: 14.4 min | Eval time: 2.1 s
+
+===== AVERAGE OVER ALL IMAGES =====
+Tag      Attack    Avg-PSNR    Avg-SSIM    Avg-acc    Avg-BER   Avg-nc
+A-only   clean        27.47      0.8728     1.0000     0.0000    1.000
+A-only   jpeg70       26.50      0.8361     0.6735     0.3265    0.347
+A-only   blur2.0      22.06      0.6320     0.5153     0.4847    0.031
+A-only   res70        25.15      0.8252     0.5800     0.4200    0.160
+A-only   crop80       12.34      0.2114     0.4979     0.5021   -0.004
+A-only   noise3       25.66      0.7407     0.6957     0.3043    0.391
+B+C      clean        24.89      0.8114     0.8035     0.1965    0.607
+B+C      jpeg70       24.29      0.7723     0.6487     0.3513    0.297
+B+C      blur2.0      22.06      0.6310     0.5178     0.4822    0.036
+B+C      res70        24.70      0.8004     0.5713     0.4287    0.143
+B+C      crop80       12.31      0.1929     0.5096     0.4904    0.019
+B+C      noise3       23.88      0.7056     0.6778     0.3222    0.356
+Full     clean        31.90      0.9166     1.0000     0.0000    1.000
+Full     jpeg70       28.46      0.8528     0.6153     0.3847    0.231
+Full     blur2.0      21.76      0.6168     0.5031     0.4969    0.006
+Full     res70        24.81      0.8176     0.5489     0.4511    0.098
+Full     crop80       12.37      0.2132     0.4921     0.5079   -0.016
+Full     noise3       28.11      0.7820     0.6349     0.3651    0.270
+
+
+========== Run 5: LAM_Z0.07_LAM_J0.04_IMP_GAIN1.4_WM_STRENGTH0.93_BETA90_WM_LEN256_WM_SEED42_SCALE_LOGIT46_LAMBDA_CLEAN0.08 ==========
+Train time: 14.4 min | Eval time: 2.2 s
+
+===== AVERAGE OVER ALL IMAGES =====
+Tag      Attack    Avg-PSNR    Avg-SSIM    Avg-acc    Avg-BER   Avg-nc
+A-only   clean        28.53      0.8747     1.0000     0.0000    1.000
+A-only   jpeg70       27.58      0.8527     0.6519     0.3481    0.304
+A-only   blur2.0      22.06      0.6804     0.5200     0.4800    0.040
+A-only   res70        25.94      0.8559     0.5757     0.4243    0.151
+A-only   crop80       12.75      0.1971     0.5013     0.4987    0.003
+A-only   noise3       26.41      0.7593     0.6680     0.3320    0.336
+B+C      clean        25.31      0.6876     0.6946     0.3054    0.389
+B+C      jpeg70       24.80      0.6690     0.5490     0.4510    0.098
+B+C      blur2.0      22.04      0.6772     0.4954     0.5046   -0.009
+B+C      res70        25.30      0.7643     0.5036     0.4964    0.007
+B+C      crop80       12.71      0.1337     0.5250     0.4750    0.050
+B+C      noise3       24.20      0.6446     0.5749     0.4251    0.150
+Full     clean        33.59      0.8967     1.0000     0.0000    1.000
+Full     jpeg70       30.10      0.8632     0.7483     0.2517    0.497
+Full     blur2.0      22.03      0.6771     0.5297     0.4703    0.059
+Full     res70        26.34      0.8645     0.5965     0.4035    0.193
+Full     crop80       12.74      0.1967     0.4979     0.5021   -0.004
+Full     noise3       28.77      0.7875     0.7755     0.2245    0.551
+
+
+========== Run 6: LAM_Z0.07_LAM_J0.04_IMP_GAIN1.4_WM_STRENGTH0.93_BETA90_WM_LEN256_WM_SEED42_SCALE_LOGIT47_LAMBDA_CLEAN0.08 ==========
+Train time: 14.4 min | Eval time: 2.3 s
+
+===== AVERAGE OVER ALL IMAGES =====
+Tag      Attack    Avg-PSNR    Avg-SSIM    Avg-acc    Avg-BER   Avg-nc
+A-only   clean        24.28      0.7374     1.0000     0.0000    1.000
+A-only   jpeg70       23.79      0.7119     0.7758     0.2242    0.552
+A-only   blur2.0      20.27      0.5959     0.5255     0.4745    0.051
+A-only   res70        23.14      0.7483     0.6165     0.3835    0.233
+A-only   crop80       11.38      0.1293     0.4978     0.5022   -0.004
+A-only   noise3       23.36      0.6811     0.8045     0.1955    0.609
+B+C      clean        26.46      0.8471     0.7404     0.2596    0.481
+B+C      jpeg70       25.55      0.8102     0.5889     0.4111    0.178
+B+C      blur2.0      20.26      0.5973     0.5086     0.4914    0.017
+B+C      res70        23.65      0.8029     0.5297     0.4703    0.059
+B+C      crop80       11.40      0.1575     0.5152     0.4848    0.030
+B+C      noise3       25.02      0.7531     0.6323     0.3677    0.265
+Full     clean        21.92      0.7236     1.0000     0.0000    1.000
+Full     jpeg70       21.24      0.6851     0.6770     0.3230    0.354
+Full     blur2.0      18.41      0.4695     0.5537     0.4463    0.107
+Full     res70        19.84      0.6381     0.5856     0.4144    0.171
+Full     crop80       11.02      0.0847     0.5014     0.4986    0.003
+Full     noise3       21.32      0.6765     0.6902     0.3098    0.380
+
+
+========== Run 7: LAM_Z0.07_LAM_J0.04_IMP_GAIN1.4_WM_STRENGTH0.94_BETA90_WM_LEN256_WM_SEED42_SCALE_LOGIT46_LAMBDA_CLEAN0.08 ==========
+Train time: 14.4 min | Eval time: 2.2 s
+
+===== AVERAGE OVER ALL IMAGES =====
+Tag      Attack    Avg-PSNR    Avg-SSIM    Avg-acc    Avg-BER   Avg-nc
+A-only   clean        25.35      0.6679     1.0000     0.0000    1.000
+A-only   jpeg70       24.92      0.6508     0.7637     0.2363    0.527
+A-only   blur2.0      21.84      0.7197     0.5467     0.4533    0.093
+A-only   res70        24.93      0.7734     0.6409     0.3591    0.282
+A-only   crop80       11.88      0.2370     0.5088     0.4912    0.018
+A-only   noise3       24.25      0.6013     0.7953     0.2047    0.591
+B+C      clean        25.63      0.6288     0.5779     0.4221    0.156
+B+C      jpeg70       25.15      0.6154     0.5041     0.4959    0.008
+B+C      blur2.0      21.87      0.7206     0.4822     0.5178   -0.036
+B+C      res70        25.03      0.7450     0.4779     0.5221   -0.044
+B+C      crop80       11.86      0.2072     0.5145     0.4855    0.029
+B+C      noise3       24.46      0.5818     0.5396     0.4604    0.079
+Full     clean        32.40      0.8180     1.0000     0.0000    1.000
+Full     jpeg70       29.58      0.7905     0.7514     0.2486    0.503
+Full     blur2.0      21.88      0.7247     0.5065     0.4935    0.013
+Full     res70        25.85      0.8642     0.5930     0.4070    0.186
+Full     crop80       11.89      0.3083     0.5077     0.4923    0.015
+Full     noise3       28.37      0.7006     0.8176     0.1824    0.635
+
+
+========== Run 8: LAM_Z0.07_LAM_J0.04_IMP_GAIN1.4_WM_STRENGTH0.94_BETA90_WM_LEN256_WM_SEED42_SCALE_LOGIT47_LAMBDA_CLEAN0.08 ==========
+Train time: 14.4 min | Eval time: 2.3 s
+
+===== AVERAGE OVER ALL IMAGES =====
+Tag      Attack    Avg-PSNR    Avg-SSIM    Avg-acc    Avg-BER   Avg-nc
+A-only   clean        27.56      0.8512     1.0000     0.0000    1.000
+A-only   jpeg70       26.46      0.8104     0.7497     0.2503    0.499
+A-only   blur2.0      22.00      0.5664     0.5166     0.4834    0.033
+A-only   res70        25.31      0.7853     0.5877     0.4123    0.175
+A-only   crop80       13.37      0.1543     0.5107     0.4893    0.021
+A-only   noise3       25.85      0.7701     0.7716     0.2284    0.543
+B+C      clean        29.71      0.8760     0.5808     0.4192    0.162
+B+C      jpeg70       27.98      0.8311     0.5439     0.4561    0.088
+B+C      blur2.0      22.00      0.5658     0.5019     0.4981    0.004
+B+C      res70        25.54      0.7906     0.5181     0.4819    0.036
+B+C      crop80       13.41      0.1571     0.5085     0.4915    0.017
+B+C      noise3       27.14      0.7913     0.5681     0.4319    0.136
+Full     clean        30.22      0.9346     1.0000     0.0000    1.000
+Full     jpeg70       27.53      0.8730     0.5953     0.4047    0.191
+Full     blur2.0      21.54      0.5367     0.5280     0.4720    0.056
+Full     res70        24.61      0.7737     0.5598     0.4402    0.120
+Full     crop80       13.28      0.1549     0.4997     0.5003   -0.001
+Full     noise3       27.44      0.8400     0.5981     0.4019    0.196
+

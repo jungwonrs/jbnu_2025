@@ -1,0 +1,83 @@
+
+### Robustness evaluation ###
+
+===== e17fcfb953668567.jpg =====
+[A-only | clean ]  PSNR  27.99 SSIM 0.9084 | ACC 100.00% BER  0.00% NC 1.000
+[A-only | JPEG70] PSNR  27.33 SSIM 0.8894 | ACC  56.64% BER 43.36% NC 0.133
+[A-only | Blur2.0]  PSNR  21.39 SSIM 0.6853 | ACC  49.41% BER 50.59% NC -0.012
+[A-only | Res70]  PSNR  25.66 SSIM 0.8753 | ACC  51.65% BER 48.35% NC 0.033
+[A-only | Crop80] PSNR   9.39 SSIM 0.1721 | ACC  49.57% BER 50.43% NC -0.009
+[A-only | Noise03] PSNR  26.20 SSIM 0.7946 | ACC  57.38% BER 42.62% NC 0.148
+[B+C   | clean ]  PSNR  25.95 SSIM 0.7369 | ACC  73.12% BER 26.88% NC 0.462
+[B+C   | JPEG70] PSNR  25.40 SSIM 0.7257 | ACC  61.94% BER 38.06% NC 0.239
+[B+C   | Blur2.0]  PSNR  21.40 SSIM 0.6863 | ACC  51.57% BER 48.43% NC 0.031
+[B+C   | Res70]  PSNR  25.59 SSIM 0.8437 | ACC  55.61% BER 44.39% NC 0.112
+[B+C   | Crop80] PSNR   9.40 SSIM 0.1509 | ACC  50.90% BER 49.10% NC 0.018
+[B+C   | Noise03] PSNR  24.77 SSIM 0.6908 | ACC  58.74% BER 41.26% NC 0.175
+[Full  | clean ]  PSNR  35.94 SSIM 0.9523 | ACC 100.00% BER  0.00% NC 1.000
+[Full  | JPEG70] PSNR  31.26 SSIM 0.9180 | ACC  67.28% BER 32.72% NC 0.346
+[Full  | Blur2.0]  PSNR  21.36 SSIM 0.6817 | ACC  51.68% BER 48.32% NC 0.034
+[Full  | Res70]  PSNR  26.15 SSIM 0.8821 | ACC  58.98% BER 41.02% NC 0.180
+[Full  | Crop80] PSNR   9.40 SSIM 0.1747 | ACC  49.69% BER 50.31% NC -0.006
+[Full  | Noise03] PSNR  29.68 SSIM 0.8293 | ACC  66.01% BER 33.99% NC 0.320
+
+===== 95c16e3bccdf710b.jpg =====
+[A-only | clean ]  PSNR  24.52 SSIM 0.9263 | ACC 100.00% BER  0.00% NC 1.000
+[A-only | JPEG70] PSNR  23.21 SSIM 0.8898 | ACC  52.14% BER 47.86% NC 0.043
+[A-only | Blur2.0]  PSNR  16.51 SSIM 0.3613 | ACC  48.47% BER 51.53% NC -0.031
+[A-only | Res70]  PSNR  19.22 SSIM 0.6955 | ACC  49.00% BER 51.00% NC -0.020
+[A-only | Crop80] PSNR  10.35 SSIM 0.0410 | ACC  49.56% BER 50.44% NC -0.009
+[A-only | Noise03] PSNR  23.54 SSIM 0.8949 | ACC  53.13% BER 46.87% NC 0.063
+[B+C   | clean ]  PSNR  22.42 SSIM 0.8624 | ACC  70.27% BER 29.73% NC 0.405
+[B+C   | JPEG70] PSNR  21.58 SSIM 0.8344 | ACC  56.04% BER 43.96% NC 0.121
+[B+C   | Blur2.0]  PSNR  16.51 SSIM 0.3612 | ACC  49.76% BER 50.24% NC -0.005
+[B+C   | Res70]  PSNR  19.12 SSIM 0.6858 | ACC  51.18% BER 48.82% NC 0.024
+[B+C   | Crop80] PSNR  10.33 SSIM 0.0393 | ACC  50.29% BER 49.71% NC 0.006
+[B+C   | Noise03] PSNR  21.83 SSIM 0.8426 | ACC  57.88% BER 42.12% NC 0.158
+[Full  | clean ]  PSNR  35.57 SSIM 0.9899 | ACC 100.00% BER  0.00% NC 1.000
+[Full  | JPEG70] PSNR  26.91 SSIM 0.9401 | ACC  60.99% BER 39.01% NC 0.220
+[Full  | Blur2.0]  PSNR  16.50 SSIM 0.3610 | ACC  49.10% BER 50.90% NC -0.018
+[Full  | Res70]  PSNR  19.36 SSIM 0.7068 | ACC  51.07% BER 48.93% NC 0.021
+[Full  | Crop80] PSNR  10.28 SSIM 0.0409 | ACC  49.69% BER 50.31% NC -0.006
+[Full  | Noise03] PSNR  29.37 SSIM 0.9582 | ACC  67.18% BER 32.82% NC 0.344
+
+===== 1bf0ff8ab9376d3c.jpg =====
+[A-only | clean ]  PSNR  25.88 SSIM 0.8633 | ACC 100.00% BER  0.00% NC 1.000
+[A-only | JPEG70] PSNR  25.54 SSIM 0.8386 | ACC  59.74% BER 40.26% NC 0.195
+[A-only | Blur2.0]  PSNR  22.93 SSIM 0.7561 | ACC  48.65% BER 51.35% NC -0.027
+[A-only | Res70]  PSNR  25.47 SSIM 0.8680 | ACC  53.06% BER 46.94% NC 0.061
+[A-only | Crop80] PSNR  10.61 SSIM 0.2692 | ACC  49.58% BER 50.42% NC -0.008
+[A-only | Noise03] PSNR  24.69 SSIM 0.6831 | ACC  61.37% BER 38.63% NC 0.227
+[B+C   | clean ]  PSNR  25.80 SSIM 0.6002 | ACC  72.90% BER 27.10% NC 0.458
+[B+C   | JPEG70] PSNR  25.36 SSIM 0.5826 | ACC  63.48% BER 36.52% NC 0.270
+[B+C   | Blur2.0]  PSNR  22.98 SSIM 0.7599 | ACC  51.33% BER 48.67% NC 0.027
+[B+C   | Res70]  PSNR  26.01 SSIM 0.7995 | ACC  56.86% BER 43.14% NC 0.137
+[B+C   | Crop80] PSNR  10.54 SSIM 0.2039 | ACC  51.68% BER 48.32% NC 0.034
+[B+C   | Noise03] PSNR  24.65 SSIM 0.5494 | ACC  59.78% BER 40.22% NC 0.196
+[Full  | clean ]  PSNR  36.07 SSIM 0.9229 | ACC 100.00% BER  0.00% NC 1.000
+[Full  | JPEG70] PSNR  32.28 SSIM 0.8868 | ACC  73.94% BER 26.06% NC 0.479
+[Full  | Blur2.0]  PSNR  22.94 SSIM 0.7533 | ACC  51.91% BER 48.09% NC 0.038
+[Full  | Res70]  PSNR  26.48 SSIM 0.8766 | ACC  65.46% BER 34.54% NC 0.309
+[Full  | Crop80] PSNR  10.50 SSIM 0.2620 | ACC  49.28% BER 50.72% NC -0.014
+[Full  | Noise03] PSNR  29.51 SSIM 0.7285 | ACC  67.64% BER 32.36% NC 0.353
+
+===== AVERAGE OVER ALL IMAGES =====
+Tag      Attack    Avg-PSNR    Avg-SSIM    Avg-acc    Avg-BER   Avg-nc
+A-only   clean        26.13      0.8993     1.0000     0.0000    1.000
+A-only   jpeg70       25.36      0.8726     0.5617     0.4383    0.123
+A-only   blur2.0      20.28      0.6009     0.4885     0.5115   -0.023
+A-only   res70        23.45      0.8129     0.5124     0.4876    0.025
+A-only   crop80       10.12      0.1608     0.4957     0.5043   -0.009
+A-only   noise3       24.81      0.7909     0.5730     0.4270    0.146
+B+C      clean        24.72      0.7332     0.7210     0.2790    0.442
+B+C      jpeg70       24.11      0.7142     0.6049     0.3951    0.210
+B+C      blur2.0      20.30      0.6025     0.5089     0.4911    0.018
+B+C      res70        23.58      0.7763     0.5455     0.4545    0.091
+B+C      crop80       10.09      0.1314     0.5096     0.4904    0.019
+B+C      noise3       23.75      0.6942     0.5880     0.4120    0.176
+Full     clean        35.86      0.9550     1.0000     0.0000    1.000
+Full     jpeg70       30.15      0.9150     0.6740     0.3260    0.348
+Full     blur2.0      20.27      0.5987     0.5090     0.4910    0.018
+Full     res70        24.00      0.8218     0.5850     0.4150    0.170
+Full     crop80       10.06      0.1592     0.4955     0.5045   -0.009
+Full     noise3       29.52      0.8387     0.6695     0.3305    0.339
