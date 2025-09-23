@@ -3,30 +3,34 @@ ROOT        = os.path.join(os.path.dirname(__file__), "coco")
 TRAIN_JSON  = os.path.join(ROOT, r"annotations\instances_train2017.json")
 TRAIN_DIR   = os.path.join(ROOT, "train2017")
 TEST_DIR    = os.path.join(os.path.dirname(__file__), "images")
-MODEL_DIR = 'C:\\Users\\seo\\Desktop\\watermark_experiment\\LAM_Z0.07_LAM_J0.04_IMP_GAIN1.46_WM_STRENGTH0.93_BETA90_WM_LEN256_WM_SEED42_SCALE_LOGIT43_LAMBDA_CLEAN0.08_BLOCKS6_EPOCHS30_EPOCHS_A10_EPOCHS_B20'
+MODEL_DIR = 'C:\\Users\\seo\\Desktop\\watermark_experiment\\LAM_Z0.07_LAM_J0.07_IMP_GAIN1.35_LOGIT_COEFF110_LAMBDA_CLEAN0.08_WM_LEN256_WM_SEED42_BLOCKS20_EPOCHS200_BATCH8_LAMBDA_DISTORTION250_BETA_MAX150_WM_STRENGTH5_EPOCHS_A66_EPOCHS_B134'
 
 #MODEL_DIR = r'.'
 
 
 # model settings
 N_IMG = 10000
-BLOCKS = 6
-BATCH = 4
-EPOCHS = 30
-EPOCHS_A = 10
-EPOCHS_B = 20
-LR          = 1e-4
+#N_IMG = 1000
+BLOCKS = 20
+BATCH = 8
+EPOCHS = 200
+EPOCHS_A = 66
+EPOCHS_B = 134
+LR          = 1e-5
 LAM_Z = 0.07
-LAM_J = 0.04
-BETA = 90
-IMP_GAIN = 1.46
+LAM_J = 0.07
+BETA = 100
+IMP_GAIN = 1.35
 LAMBDA_CLEAN = 0.08
+BETA_MAX = 150
+BETA_FLOOR = 20
+LOGIT_COEFF = 110
+LAMBDA_DISTORTION = 250
 
 # watermark settings 
-WM_STRENGTH = 0.93
+WM_STRENGTH = 5
 WM_LEN = 256
 WM_SEED = 42
-SCALE_LOGIT = 43
 
 # util settings
 WAVELET     = "haar"

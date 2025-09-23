@@ -4,33 +4,48 @@ from config import MODEL_DIR
 
 ROOT_DIR   = Path(__file__).resolve().parent
 CONFIG_PATH = ROOT_DIR / "config.py"
-TRAIN_PY    = (ROOT_DIR / "model_experiment_final.py").resolve()
-EVAL_PY     = (ROOT_DIR / "watermark_experiment_final2.py").resolve()
+TRAIN_PY    = (ROOT_DIR / "model.py").resolve()
+EVAL_PY     = (ROOT_DIR / "watermark_experiment.py").resolve()
 LOG_PATH    = ROOT_DIR / "results.txt"
 
-GRID = {      # 그대로
-    "LAM_Z"       : [0.5, 0.1],
-    "LAM_J"       : [0.5, 0.1],
-    "IMP_GAIN"    : [1, 3, 5],
-    "WM_STRENGTH" : [0.05, 0.1, 0.2],
+
+GRID = {
+    "LAM_Z":        [0.07],        
+    "LAM_J":        [0.07],             
+    "IMP_GAIN":     [1.35],        
+    "LOGIT_COEFF":  [110],            
+    "LAMBDA_CLEAN": [0.08],        
+    "WM_LEN":       [256],
+    "WM_SEED":      [42],
+    "BLOCKS":       [10, 20, 30],
+    "EPOCHS":       [200, 300],                
+    "BATCH":        [4, 8], 
+    "LAMBDA_DISTORTION": [250],  # 높을수록 PSNR 향상
+    "BETA_MAX":          [150],  # 높을수록 강인성 향상
+    "WM_STRENGTH":       [5],       # 높을수록 강인성 향상                
 }
+
 
 def patch_config(**pairs):
     txt = CONFIG_PATH.read_text(encoding="utf-8")
     for k, v in pairs.items():
-        val = repr(v).replace("\\", "\\\\")      # ← 핵심 한 줄
+        val = repr(v).replace("\\", "\\\\")     
         txt = re.sub(rf"^{k}\s*=.*$", f"{k} = {val}", txt, flags=re.M)
     CONFIG_PATH.write_text(txt, encoding="utf-8")
 
 def run_one(combo: dict, run_idx: int):
+    epochs = combo["EPOCHS"]
+    combo["EPOCHS_A"] = max(1, epochs // 3)      
+    combo["EPOCHS_B"] = epochs - combo["EPOCHS_A"]
+
     tag = "_".join(f"{k}{v}" for k, v in combo.items())
-    print(f"\n▶▶ [{run_idx}] {tag}")
+    print(f"\n▶▶ [{run_idx}] {tag}", flush=True)
 
     tag_folder = os.path.abspath(os.path.join(MODEL_DIR, tag))
     os.makedirs(tag_folder, exist_ok=True)
 
     patch_pairs = dict(combo)
-    patch_pairs["MODEL_DIR"] = tag_folder        # ← 그냥 문자열!
+    patch_pairs["MODEL_DIR"] = tag_folder      
     patch_config(**patch_pairs)
 
     t0 = time.time()
@@ -59,13 +74,14 @@ def run_one(combo: dict, run_idx: int):
         f.write(f"\n========== Run {run_idx}: {tag} ==========\n")
         f.write(f"Train time: {t_train/60:.1f} min | Eval time: {t_eval:.1f} s\n")
         if success:
-            f.write(eval_out)
+            marker = "\n===== AVERAGE OVER ALL IMAGES ====="
+            f.write(eval_out[eval_out.find(marker):] if marker in eval_out else eval_out)
         else:
             f.write("[Evaluation Failed]\nSTDOUT:\n" + eval_out + "\nSTDERR:\n" + eval_err)
         f.write("\n")
 
     if success:
-        print(f"✓ 저장 완료  (train {t_train/60:.1f} min / eval {t_eval:.1f} s)")
+        print(f"✓ 저장 완료  (train {t_train/60:.1f} min / eval {t_eval:.1f} s)", flush=True)
     else:
         print("❌ 평가 실패:", tag)
 
@@ -80,6 +96,6 @@ if __name__ == "__main__":
     for i, vals in enumerate(combos, 1):
         run_one(dict(zip(keys, vals)), i)
 
-    print(f"\n◎ 모든 실험 종료 - 총 소요 {(time.time() - t_all) / 60:.1f}분")
+    print(f"\n◎ 모든 실험 종료 - 총 소요 {(time.time() - t_all) / 60:.1f}분", flush=True)
 # ───────────────────────────────────────────────────────────
 

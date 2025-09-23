@@ -6,6 +6,8 @@ from pathlib import Path
 from config import *
 from collections import defaultdict
 import logging, sys, os
+import torch.nn.functional as F
+
 
 log_fname = os.environ.get("LOG_FILE", "results.txt") 
 
@@ -91,12 +93,13 @@ def subnet(c_in, c_out):
     )
 
 def load_all_nets():
-    netA = load_net(os.path.join(MODEL_DIR, "both",  "inn_both.pth"))
-    netB = load_net(os.path.join(MODEL_DIR, "lh",    "inn_lh.pth"))
-    netC = load_net(os.path.join(MODEL_DIR, "hl",    "inn_hl.pth"))
+    #netA = load_net(os.path.join(MODEL_DIR, "both",  "inn_both.pth"))
+    #netB = load_net(os.path.join(MODEL_DIR, "lh",    "inn_lh.pth"))
+    #netC = load_net(os.path.join(MODEL_DIR, "hl",    "inn_hl.pth"))
     netF = load_net(os.path.join(MODEL_DIR, "full",  "inn_full.pth"))
 
-    return netA, netB, netC, netF
+    #return netA, netB, netC, netF
+    return netF
 
 # ────────── 워터마크 삽입 ──────────
 def make_watermark():
@@ -108,50 +111,51 @@ def make_watermark():
     wm_bits_rand = np.stack([mapA, mapB], 0)
     return bitsA, bitsB, mapA, mapB, wm_bits_rand
 
-def embedding (netA, netB, netC, netF):
+#def embedding (netA, netB, netC, netF):
+def embedding (netF):
     results = {}
 
     with torch.no_grad():
         for img_name, tensors in load_test_images().items():
             try:
                 gray = tensors['gray']
-                LH_HL = tensors['LH_HL']
-                LH = tensors['LH']
-                HL = tensors['HL']
+                #LH_HL = tensors['LH_HL']
+                #LH = tensors['LH']
+                #HL = tensors['HL']
                 FULL = tensors['FULL']
                 bitsA, bitsB, mapA, mapB, wm_bits_rand = make_watermark()
 
-                zA, _ = netA(LH_HL)
-                stegoA = netA(add_wm_split(zA, 0, 1, mapA, mapB), rev=True)
+                #zA, _ = netA(LH_HL)
+                #stegoA = netA(add_wm_split(zA, 0, 1, mapA, mapB), rev=True)
 
-                zB, _ = netB(LH)
-                stego_LH = netB(add_wm_split(zB, 0, 1,  mapA, mapB), rev=True)
+                #zB, _ = netB(LH)
+                #stego_LH = netB(add_wm_split(zB, 0, 0, mapA, mapA), rev=True)
 
-                zC, _ = netC(HL)
-                stego_HL = netC(add_wm_split(zC, 0, 1,  mapA, mapB), rev=True)
+                #zC, _ = netC(HL)
+                #stego_HL = netC(add_wm_split(zC, 0, 0, mapB, mapB), rev=True)
 
-                LH_st = (stego_LH[0] if isinstance(stego_LH,tuple) else stego_LH)[0,0].cpu().numpy()
-                HL_st = (stego_HL[0] if isinstance(stego_HL,tuple) else stego_HL)[0,0].cpu().numpy()
-                stegoBC = torch.from_numpy(np.stack([LH_st,HL_st],0))[None].float().to(DEVICE)
+                #LH_st = (stego_LH[0] if isinstance(stego_LH,tuple) else stego_LH)[0,0].cpu().numpy()
+                #HL_st = (stego_HL[0] if isinstance(stego_HL,tuple) else stego_HL)[0,0].cpu().numpy()
+                #stegoBC = torch.from_numpy(np.stack([LH_st,HL_st],0))[None].float().to(DEVICE)
 
                 zF,_ = netF(FULL)
                 stegoF = netF(add_wm_split(zF, 1, 2,  mapA, mapB), rev=True)
 
-                recA  = coeff2img(stegoA, gray)
-                recBC = coeff2img(stegoBC, gray)
+                #recA  = coeff2img(stegoA, gray)
+                #recBC = coeff2img(stegoBC, gray)
                 recF  = coeff2img(stegoF, gray)
 
                 results[img_name] = {
-                    'coeffA_clean': LH_HL,
-                    'coeffB_clean': LH,
-                    'coeffC_clean': HL,
+                    #'coeffA_clean': LH_HL,
+                    #'coeffB_clean': LH,
+                    #'coeffC_clean': HL,
                     'coeffF_clean': FULL,
-                    'coeffA_stego': stegoA[0] if isinstance(stegoA, tuple) else stegoA,
-                    'coeffBC_stego': stegoBC,
+                    #'coeffA_stego': stegoA[0] if isinstance(stegoA, tuple) else stegoA,
+                    #'coeffBC_stego': stegoBC,
                     'coeffF_stego': stegoF[0] if isinstance(stegoF, tuple) else stegoF,
 
-                    'recA' : recA,
-                    'recBC': recBC,
+                    #'recA' : recA,
+                    #'recBC': recBC,
                     'recF': recF,
                     
                     'gray': gray,
@@ -159,6 +163,7 @@ def embedding (netA, netB, netC, netF):
                     'wm_bits_rand': wm_bits_rand,
                     'bitsA': bitsA,
                     'bitsB': bitsB,
+                    'gt_bits'     : np.concatenate([bitsA, bitsB]),
                 }
 
             except Exception as e:
@@ -188,49 +193,71 @@ def coeff2img(coeff, gray):
         LL_,LH_,HL_,HH_ = [c.cpu().numpy() for c in coeff[0]]
     return pywt.idwt2((LL_,(LH_,HL_,HH_)), WAVELET)
 
-# ────────── 워터마크 추출 ──────────
+# ───────── 수정된 extract ─────────
 @torch.no_grad()
 def extract(coeff, model, two_ch, z_base):
     z, _ = model(coeff)
-    
-    if not two_ch:
-        z, z_base = z[:, 1:3], z_base[:, 1:3]
+    if not two_ch:                       # full INN → LH·HL 두 채널만 사용
+        z, z_base = z[:, 1:3], z_base[:, 1:3]   # (B,2,H,W)
 
-    logits = (z - z_base) * (SCALE_LOGIT / WM_STRENGTH)
+    dz = z - z_base
+    s  = dz.flatten(2).std(-1, keepdim=True).mean(1, keepdim=True).unsqueeze(-1) + 1e-6
+    logits = (dz / s) * LOGIT_COEFF      # (B,2,H,W)
+    B, C, H, W = logits.shape            # C = 2
 
-    pred_map = (logits > 0).to(torch.uint8)
+    # ── 채널별로 128 비트씩 풀링 ──
+    bit_idx = (torch.arange(H*W, device=logits.device)
+               * (WM_LEN // 2) // (H*W)).view(1,1,H,W)
+    pooled = torch.zeros(B, C, WM_LEN//2, device=logits.device).scatter_add_(
+        2,
+        bit_idx.expand(B,C,H,W).reshape(B, C, -1),
+        logits.reshape(B, C, -1)
+    ) / (H * W / (WM_LEN//2))
 
-    return pred_map[0].detach().cpu().numpy()
+    bits_lh = (pooled[:,0] > 0).to(torch.uint8)      # LH → 앞 128
+    bits_hl = (pooled[:,1] > 0).to(torch.uint8)      # HL → 뒤 128
+    pred_bits = torch.cat([bits_lh, bits_hl], dim=1) # (B,256)
+    return pred_bits.squeeze(0).cpu().numpy()
 
+
+# ───────── 수정된 extract_two_nets ─────────
 @torch.no_grad()
 def extract_two_nets(coeff, net_lh, net_hl, z_base_lh, z_base_hl):
+    # LH
+    bits_lh = extract(coeff[:, 0:1].repeat(1,2,1,1), net_lh, True, z_base_lh)  # (256,)
+    # HL
+    bits_hl = extract(coeff[:, 1:2].repeat(1,2,1,1), net_hl, True, z_base_hl)
 
-    coeff_lh = torch.cat([coeff[:, 0:1]]*2, 1)
-    map_lh = extract(coeff_lh, net_lh, True, z_base_lh)[0]
+    pred_bits = np.concatenate([bits_lh[:128], bits_hl[:128]]).astype(np.uint8)
+    return pred_bits
 
-    coeff_hl = torch.cat([coeff[:, 1:2]]*2, 1)
-    map_hl = extract(coeff_hl, net_hl, True, z_base_hl)[1]
 
-    return np.stack([map_lh, map_hl], axis=0).astype(np.uint8)
-
-# ────────── 워터마크 평가 ──────────
+# ───────── 완전히 교체할 wm_metrics ─────────
 def wm_metrics(pred, gt):
+    """
+    pred / gt 가 (256,) 이든 (2,128,128)이든
+    길이 256의 1-차원 벡터로 맞춘 뒤
+    ACC, BER, NC를 계산한다.
+    """
+    # 1) 1-차원으로 평탄화 + uint8 변환
+    pred = pred.reshape(-1).astype(np.int16)
+    gt   = gt.reshape(-1).astype(np.int16)
+
+    # 2) 길이 확인
     assert pred.shape == gt.shape, "shape mismatch!"
 
-    # 정확도 & BER
+    # 3) ACC / BER
     acc = (pred == gt).mean()
     ber = 1.0 - acc
-    
-    # NC 
-    pred = pred.astype(np.int8)
-    gt = gt.astype(np.int8)
-    pred_bipolar = pred * 2 - 1
-    gt_bipolar = gt * 2 - 1
+
+    # 4) NC  (0/1 → -1/+1 후 코사인 유사도)
+    pred_bipolar = (pred * 2 - 1).astype(np.float32)
+    gt_bipolar   = (gt   * 2 - 1).astype(np.float32)
     nc = (pred_bipolar * gt_bipolar).mean()
 
     return acc, ber, nc
 
-def evaluate(tag, rec_img, coeff_tensor, model, two_ch, z_base, gray, wm_bits_rand):
+def evaluate(tag, rec_img, coeff_tensor, model, two_ch, z_base, gray, gt_bits):
     base_u8 = to_u8(rec_img)
     p0,s0 = psnr(gray, base_u8, data_range=255), ssim(gray, base_u8, data_range=255, win_size=7)
     def _log(msg): logger.info(f"[{tag:5s} | {msg}")
@@ -239,7 +266,7 @@ def evaluate(tag, rec_img, coeff_tensor, model, two_ch, z_base, gray, wm_bits_ra
     coeff_from_spatial = spatial2coeff(rec_img, "2" if two_ch else "4")
     pred = extract(coeff_from_spatial, model, two_ch, z_base)
 
-    acc0,ber0,nc0 = wm_metrics(pred, wm_bits_rand)
+    acc0,ber0,nc0 = wm_metrics(pred, gt_bits)
     _log(f"clean ]  PSNR {p0:6.2f} SSIM {s0:.4f} | ACC {acc0*100:6.2f}% BER {ber0*100:5.2f}% NC {nc0:.3f}")
 
     metrics = {"clean": {"psnr": p0, "ssim": s0, "acc": acc0, "ber": ber0, "nc": nc0}}
@@ -248,7 +275,7 @@ def evaluate(tag, rec_img, coeff_tensor, model, two_ch, z_base, gray, wm_bits_ra
     for q in JPEG_Q:
         atk_u8 = jpeg(base_u8,q); atk_f = atk_u8.astype(np.float32)/255.
         atk_coef = spatial2coeff(atk_f, "2" if two_ch else "4")
-        acc,ber,nc = wm_metrics(extract(atk_coef, model, two_ch, z_base), wm_bits_rand)
+        acc,ber,nc = wm_metrics(extract(atk_coef, model, two_ch, z_base), gt_bits)
         p,s = psnr(gray, atk_u8, data_range=255), ssim(gray, atk_u8, data_range=255, win_size=7)
         _log(f"JPEG{q:02d}] PSNR {p:6.2f} SSIM {s:.4f} | ACC {acc*100:6.2f}% BER {ber*100:5.2f}% NC {nc:.3f}")
 
@@ -258,7 +285,7 @@ def evaluate(tag, rec_img, coeff_tensor, model, two_ch, z_base, gray, wm_bits_ra
     # Gaussian Blur
     for sg in GB_SIG:
         atk_f = gblur(rec_img, sg); atk_coef = spatial2coeff(atk_f, "2" if two_ch else "4")
-        acc,ber,nc = wm_metrics(extract(atk_coef, model, two_ch, z_base), wm_bits_rand)
+        acc,ber,nc = wm_metrics(extract(atk_coef, model, two_ch, z_base), gt_bits)
         atk_u8 = to_u8(atk_f); p,s = psnr(gray, atk_u8, data_range=255), ssim(gray, atk_u8, data_range=255, win_size=7)
         _log(f"Blur{sg}]  PSNR {p:6.2f} SSIM {s:.4f} | ACC {acc*100:6.2f}% BER {ber*100:5.2f}% NC {nc:.3f}")
 
@@ -268,7 +295,7 @@ def evaluate(tag, rec_img, coeff_tensor, model, two_ch, z_base, gray, wm_bits_ra
     for sc in RS_SCALES:
         atk_u8 = resize_scale(base_u8, sc); atk_f = atk_u8.astype(np.float32)/255.
         atk_coef = spatial2coeff(atk_f, "2" if two_ch else "4")
-        acc,ber,nc = wm_metrics(extract(atk_coef, model, two_ch, z_base), wm_bits_rand)
+        acc,ber,nc = wm_metrics(extract(atk_coef, model, two_ch, z_base), gt_bits)
         p,s = psnr(gray, atk_u8, data_range=255), ssim(gray, atk_u8, data_range=255, win_size=7)
         _log(f"Res{int(sc*100):02d}]  PSNR {p:6.2f} SSIM {s:.4f} | ACC {acc*100:6.2f}% BER {ber*100:5.2f}% NC {nc:.3f}")
 
@@ -278,7 +305,7 @@ def evaluate(tag, rec_img, coeff_tensor, model, two_ch, z_base, gray, wm_bits_ra
     for keep in CR_PCTS:
         atk_u8 = crop_pct(base_u8, keep); atk_f = atk_u8.astype(np.float32)/255.
         atk_coef = spatial2coeff(atk_f, "2" if two_ch else "4")
-        acc,ber,nc = wm_metrics(extract(atk_coef, model, two_ch, z_base), wm_bits_rand)
+        acc,ber,nc = wm_metrics(extract(atk_coef, model, two_ch, z_base), gt_bits)
         p,s = psnr(gray, atk_u8, data_range=255), ssim(gray, atk_u8, data_range=255, win_size=7)
         _log(f"Crop{int(keep*100):02d}] PSNR {p:6.2f} SSIM {s:.4f} | ACC {acc*100:6.2f}% BER {ber*100:5.2f}% NC {nc:.3f}")
 
@@ -289,7 +316,7 @@ def evaluate(tag, rec_img, coeff_tensor, model, two_ch, z_base, gray, wm_bits_ra
     for sg in GN_SIGMA:
         atk_u8 = add_noise(base_u8, sg); atk_f = atk_u8.astype(np.float32)/255.
         atk_coef = spatial2coeff(atk_f, "2" if two_ch else "4")
-        acc,ber,nc = wm_metrics(extract(atk_coef, model, two_ch, z_base), wm_bits_rand)
+        acc,ber,nc = wm_metrics(extract(atk_coef, model, two_ch, z_base), gt_bits)
         p,s = psnr(gray, atk_u8, data_range=255), ssim(gray, atk_u8, data_range=255, win_size=7)
         _log(f"Noise{int(sg*100):02d}] PSNR {p:6.2f} SSIM {s:.4f} | ACC {acc*100:6.2f}% BER {ber*100:5.2f}% NC {nc:.3f}")
 
@@ -298,7 +325,7 @@ def evaluate(tag, rec_img, coeff_tensor, model, two_ch, z_base, gray, wm_bits_ra
     
     return metrics
 
-def evaluate_BC(tag, rec_img, coeff_tensor, net_lh, net_hl, z_base_lh, z_base_hl, gray, wm_bits_rand):
+def evaluate_BC(tag, rec_img, coeff_tensor, net_lh, net_hl, z_base_lh, z_base_hl, gray, gt_bits):
     base_u8 = to_u8(rec_img)
     p0,s0 = psnr(gray, base_u8, data_range=255), ssim(gray, base_u8, data_range=255, win_size=7)
     def _log(msg): logger.info(f"[{tag:5s} | {msg}")
@@ -306,7 +333,7 @@ def evaluate_BC(tag, rec_img, coeff_tensor, net_lh, net_hl, z_base_lh, z_base_hl
     #pred = extract_two_nets(coeff_tensor, net_lh, net_hl, z_base_lh, z_base_hl)
     coeff_from_spatial = spatial2coeff(rec_img, "2")
     pred = extract_two_nets(coeff_from_spatial, net_lh, net_hl, z_base_lh, z_base_hl)
-    acc0,ber0,nc0 = wm_metrics(pred, wm_bits_rand)
+    acc0,ber0,nc0 = wm_metrics(pred, gt_bits)
     _log(f"clean ]  PSNR {p0:6.2f} SSIM {s0:.4f} | ACC {acc0*100:6.2f}% BER {ber0*100:5.2f}% NC {nc0:.3f}")
 
     metrics = {"clean": {"psnr": p0, "ssim": s0, "acc": acc0, "ber": ber0,  "nc": nc0}}
@@ -316,7 +343,7 @@ def evaluate_BC(tag, rec_img, coeff_tensor, net_lh, net_hl, z_base_lh, z_base_hl
     for q in JPEG_Q:
         atk_u8 = jpeg(base_u8,q); atk_f = atk_u8.astype(np.float32)/255.
         atk_coef  = spatial2coeff(atk_f,"2")
-        acc,ber,nc = wm_metrics(extract_two_nets(atk_coef, net_lh, net_hl, z_base_lh, z_base_hl), wm_bits_rand)
+        acc,ber,nc = wm_metrics(extract_two_nets(atk_coef, net_lh, net_hl, z_base_lh, z_base_hl), gt_bits)
         p,s = psnr(gray, atk_u8, data_range=255), ssim(gray, atk_u8, data_range=255, win_size=7)
         _log(f"JPEG{q:02d}] PSNR {p:6.2f} SSIM {s:.4f} | ACC {acc*100:6.2f}% BER {ber*100:5.2f}% NC {nc:.3f}")
         metrics[f"jpeg{q}"] = {"psnr": p, "ssim": s, "acc": acc, "ber": ber, "nc": nc}
@@ -324,7 +351,7 @@ def evaluate_BC(tag, rec_img, coeff_tensor, net_lh, net_hl, z_base_lh, z_base_hl
     # Gaussian Blur
     for sg in GB_SIG:
         atk_f = gblur(rec_img, sg); atk_coef = spatial2coeff(atk_f,"2")
-        acc,ber,nc = wm_metrics(extract_two_nets(atk_coef, net_lh, net_hl, z_base_lh, z_base_hl), wm_bits_rand)
+        acc,ber,nc = wm_metrics(extract_two_nets(atk_coef, net_lh, net_hl, z_base_lh, z_base_hl), gt_bits)
         atk_u8 = to_u8(atk_f); p,s = psnr(gray, atk_u8, data_range=255), ssim(gray, atk_u8, data_range=255, win_size=7)
         _log(f"Blur{sg}]  PSNR {p:6.2f} SSIM {s:.4f} | ACC {acc*100:6.2f}% BER {ber*100:5.2f}% NC {nc:.3f}")
         metrics[f"blur{sg}"] = {"psnr": p, "ssim": s, "acc": acc, "ber": ber, "nc": nc}
@@ -333,7 +360,7 @@ def evaluate_BC(tag, rec_img, coeff_tensor, net_lh, net_hl, z_base_lh, z_base_hl
     for sc in RS_SCALES:
         atk_u8 = resize_scale(base_u8, sc); atk_f = atk_u8.astype(np.float32)/255.
         atk_coef = spatial2coeff(atk_f, "2")
-        acc,ber,nc = wm_metrics(extract_two_nets(atk_coef, net_lh, net_hl, z_base_lh, z_base_hl), wm_bits_rand)
+        acc,ber,nc = wm_metrics(extract_two_nets(atk_coef, net_lh, net_hl, z_base_lh, z_base_hl), gt_bits)
         p,s = psnr(gray, atk_u8, data_range=255), ssim(gray, atk_u8, data_range=255, win_size=7)
         _log(f"Res{int(sc*100):02d}]  PSNR {p:6.2f} SSIM {s:.4f} | ACC {acc*100:6.2f}% BER {ber*100:5.2f}% NC {nc:.3f}")
         metrics[f"res{int(sc*100)}"] = {"psnr": p, "ssim": s, "acc": acc, "ber": ber, "nc": nc}
@@ -342,7 +369,7 @@ def evaluate_BC(tag, rec_img, coeff_tensor, net_lh, net_hl, z_base_lh, z_base_hl
     for keep in CR_PCTS:
         atk_u8 = crop_pct(base_u8, keep); atk_f = atk_u8.astype(np.float32)/255.
         atk_coef = spatial2coeff(atk_f, "2")
-        acc,ber,nc = wm_metrics(extract_two_nets(atk_coef, net_lh, net_hl, z_base_lh, z_base_hl), wm_bits_rand)
+        acc,ber,nc = wm_metrics(extract_two_nets(atk_coef, net_lh, net_hl, z_base_lh, z_base_hl), gt_bits)
         p,s = psnr(gray, atk_u8, data_range=255), ssim(gray, atk_u8, data_range=255, win_size=7)
         _log(f"Crop{int(keep*100):02d}] PSNR {p:6.2f} SSIM {s:.4f} | ACC {acc*100:6.2f}% BER {ber*100:5.2f}% NC {nc:.3f}")
         metrics[f"crop{int(keep*100)}"] = {"psnr": p, "ssim": s, "acc": acc, "ber": ber, "nc": nc}
@@ -351,7 +378,7 @@ def evaluate_BC(tag, rec_img, coeff_tensor, net_lh, net_hl, z_base_lh, z_base_hl
     for sg in GN_SIGMA:
         atk_u8 = add_noise(base_u8, sg); atk_f = atk_u8.astype(np.float32)/255.
         atk_coef = spatial2coeff(atk_f, "2")
-        acc,ber,nc = wm_metrics(extract_two_nets(atk_coef, net_lh, net_hl, z_base_lh, z_base_hl), wm_bits_rand)
+        acc,ber,nc = wm_metrics(extract_two_nets(atk_coef, net_lh, net_hl, z_base_lh, z_base_hl), gt_bits)
         p,s = psnr(gray, atk_u8, data_range=255), ssim(gray, atk_u8, data_range=255, win_size=7)
         _log(f"Noise{int(sg*100):02d}] PSNR {p:6.2f} SSIM {s:.4f} | ACC {acc*100:6.2f}% BER {ber*100:5.2f}% NC {nc:.3f}")
         metrics[f"noise{int(sg*100)}"] = {"psnr": p, "ssim": s, "acc": acc, "ber": ber, "nc": nc}
@@ -396,8 +423,10 @@ def spatial2coeff(img_f, mode):
     )[None].float().to(DEVICE)
 
 # ────────── 실행 ──────────
-netA, netB, netC, netF = load_all_nets()
-results = embedding(netA, netB, netC, netF)
+#netA, netB, netC, netF = load_all_nets()
+#results = embedding(netA, netB, netC, netF)
+netF = load_all_nets()
+results =embedding(netF)
 
 sum_metrics = defaultdict(lambda: defaultdict(lambda: {'psnr': 0.0,
                                                        'ssim': 0.0,
@@ -411,31 +440,39 @@ for img_name, D in results.items():
     logger.info(f"\n===== {img_name} =====")
 
     # ─ clean 계수 → z ─
-    zA,_ = netA(D["coeffA_clean"])
-    zB,_ = netB(D["coeffB_clean"])
-    zC,_ = netC(D["coeffC_clean"])
+    #zA,_ = netA(D["coeffA_clean"])
+    #zB,_ = netB(D["coeffB_clean"])
+    #zC,_ = netC(D["coeffC_clean"])
     zF,_ = netF(D["coeffF_clean"])
 
     # ─ (1) A-only ─
+    '''
     mA = evaluate("A-only",
                   D["recA"], D["coeffA_stego"],
                   netA, True, zA,
-                  D["gray"], D["wm_bits_rand"])
+                  D["gray"], D["gt_bits"])
 
     # ─ (2) B+C ─
     mBC = evaluate_BC("B+C",
                       D["recBC"], D["coeffBC_stego"],
                       netB, netC, zB, zC,
-                      D["gray"], D["wm_bits_rand"])
-
+                      D["gray"], D["gt_bits"])
+'''
     # ─ (3) Full ─
     mF = evaluate("Full",
                   D["recF"], D["coeffF_stego"],
                   netF, False, zF,
-                  D["gray"], D["wm_bits_rand"])
+                  D["gray"], D["gt_bits"])
 
     # ─── 합계/카운트 누적 ───
+    '''
     for tag, m in [('A-only', mA), ('B+C', mBC), ('Full', mF)]:
+        for atk, vals in m.items(): 
+            for k in ('psnr', 'ssim', 'acc', 'ber', 'nc'):
+                sum_metrics[tag][atk][k] += vals[k]
+            cnt_metrics[tag][atk] += 1
+    '''
+    for tag, m in [('Full', mF)]:
         for atk, vals in m.items(): 
             for k in ('psnr', 'ssim', 'acc', 'ber', 'nc'):
                 sum_metrics[tag][atk][k] += vals[k]
@@ -456,7 +493,20 @@ attack_order = (
     [f'noise{int(n*100)}' for n in GN_SIGMA]
 )
 
+'''
 for tag in ["A-only", "B+C", "Full"]:
+    for atk in attack_order:
+        if cnt_metrics[tag][atk] == 0:
+            continue
+        n  = cnt_metrics[tag][atk]
+        ps = sum_metrics[tag][atk]['psnr'] / n
+        ss = sum_metrics[tag][atk]['ssim'] / n
+        ac = sum_metrics[tag][atk]['acc'] / n
+        be = sum_metrics[tag][atk]['ber']  / n
+        nc = sum_metrics[tag][atk]['nc']   / n
+        logger.info(header.format(tag, atk, f"{ps:.2f}", f"{ss:.4f}", f"{ac:.4f}",  f"{be:.4f}", f"{nc:.3f}"))
+'''
+for tag in ["Full"]:
     for atk in attack_order:
         if cnt_metrics[tag][atk] == 0:
             continue

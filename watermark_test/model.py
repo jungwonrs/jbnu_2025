@@ -7,6 +7,7 @@ import FrEIA.framework as Ff, FrEIA.modules as Fm
 from pycocotools.coco import COCO
 from tqdm import tqdm
 from config import *
+from math import pi, cos
 
 IMP_W = None
 
@@ -61,112 +62,107 @@ def train(tag, tensors, build_inn):
 
     loader = torch.utils.data.DataLoader(
         tensors,
-        batch_size = BATCH,
-        shuffle = True,
-        drop_last = True
+        batch_size=BATCH,
+        shuffle=True,
+        drop_last=True
     )
 
     C, H, W = tensors.shape[1:]
     net = build_inn(C, H, W).to(DEVICE)
     
-    # beta1 = 0.5 (기본값: 0.9, moving average of gradient의 지수 감쇠율), 
-    # beta2 = 0.999 (기본값: 0.999, gradient 제곱의 moving average의 지수 감쇠율)
-    # gradient 설정하기 위해서 만지는 값
-    opt= optim.Adam(net.parameters(), lr=LR, betas=(0.5, 0.999))
+    opt = optim.Adam(net.parameters(), lr=LR, betas=(0.5, 0.999))
+    
+    # [핵심 수정 1] 학습률 스케줄러 추가 (위치 수정 없음)
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(opt, mode='min', factor=0.5, patience=5)
 
-    # 랜덤 워터마크 생성
     _, wm_map = make_wm_bits(WM_LEN, WM_SEED, (H, W))
-
-    # 워터마크 강도 설정
     wm_sign = (wm_map * 2 - 1).to(DEVICE) * WM_STRENGTH
-
-    # 워터마크를 어디다 넣을지 지정하는 리스트
     wm_ch = list(range(C)) if C == 2 else [1, 2]
 
-    for ep in range(1, EPOCHS +1):
+    for ep in range(1, EPOCHS + 1):
         phase = 'A' if ep <= EPOCHS_A else 'B'
         epoch_loss = 0.0
+        
+        if phase == 'B':
+            progress = (ep - EPOCHS_A) / EPOCHS_B
+            BETA = BETA_MAX * (1 - cos(pi * progress)) / 2
+        else:
+            BETA = 0
+
         for step, x in enumerate(loader, 1):
             x = x.to(DEVICE)
             z, logJ = net(x)
-            # 기본 손실 값 (중요)
-            loss = LAM_Z * IMP_GAIN * z.pow(2).mean() - LAM_J * logJ.mean()
+            
+            loss_z = LAM_Z * IMP_GAIN * z.pow(2).mean()
+            loss_j = LAM_J * logJ.mean()
+            
+            loss = loss_z - loss_j
             
             if phase == 'A':
-                # Loss A 손실 값 (중요)
-                # Loss A = 기본 손실 값 + 0.05 * z[:, wm_ch].pow(2).mean()
-                # 워터마킹이 쉽고 안정적으로 심어지도록
                 loss += 0.05 * z[:, wm_ch].pow(2).mean()
-
-            else:
-                imp_scaled = 0.5 + 0.5 * build_importance_map(x).to(DEVICE)  # (1,1,H,W)
-                imp_scaled = imp_scaled.expand(x.size(0), 1, H, W)           # (B,1,H,W)
+            else: # phase == 'B'
+                imp_scaled = 0.5 + 0.5 * build_importance_map(x).to(DEVICE)
+                imp_scaled = imp_scaled.expand(x.size(0), 1, H, W)
                 z_emb = z.clone()
-
                 wm = wm_sign.unsqueeze(0) * imp_scaled
-
+                
+                target_signal = torch.zeros_like(z)
                 for ch in wm_ch:
+                    target_signal[:, ch] = wm.squeeze(1)
                     z_emb[:, ch] += wm.squeeze(1)
                 
                 x_stego, _ = net(z_emb, rev=True, jac=True)
-                # Loss B 손실 값 (중요)
-                # Loss B = 기본 손실 값 + LAMBDA_CLEAN * (x_stego - x).abs().mean() + beta * wm_loss
-                # 워터마크 이미지 임베딩, 복원력 보장
-                clean_loss = LAMBDA_CLEAN * (x_stego - x).abs().mean()
-                loss += clean_loss
 
-                # 워터마크 강인성을 위한 공격 학습
-                # 1/5씩 확률로 공격을 고르고 랜덤값을 0~1 범위에서 5등분 진행
+                loss_distortion = F.mse_loss(x_stego, x)
+
                 r = random.random()
-
-                # Gaussian Blur
                 if r < 0.2:
                     a = random.uniform(0.5, 5.0)
                     x_atk = TF.gaussian_blur(x_stego, (int(a*4+1)|1), a)
-                
-                # JPEG 압축
                 elif r < 0.4:
                     q = random.randint(10, 95)
                     x_atk = jpeg_tensor(x_stego[:, :1], q).repeat(1, C, 1, 1)
-                
-                # Gaussain Noise
                 elif r < 0.6:
                     noise_std = random.uniform(0.005, 0.1)
                     x_atk = (x_stego + torch.randn_like(x_stego) * noise_std).clamp(0,1)
-
-                # Resize 
                 elif r < 0.8:
-                    H, W = x_stego.shape[-2:]
+                    H_img, W_img = x_stego.shape[-2:]
                     scale = random.uniform(0.5, 0.95)
-                    newH, newW = int(H*scale), int(W*scale)
+                    newH, newW = int(H_img*scale), int(W_img*scale)
                     resize = TF.resize(x_stego, [newH, newW])
-                    x_atk = TF.resize(resize, [H, W])
-
-                # Center Crop
+                    x_atk = TF.resize(resize, [H_img, W_img])
                 else:
-                    H, W = x_stego.shape[-2:]
+                    H_img, W_img = x_stego.shape[-2:]
                     crop_scale = random.uniform(0.5, 0.95)
-                    cropH, cropW = int(H*crop_scale), int(W*crop_scale)
+                    cropH, cropW = int(H_img*crop_scale), int(W_img*crop_scale)
                     cropped = TF.center_crop(x_stego, [cropH, cropW])
-                    x_atk = TF.resize(cropped, [H, W])
+                    x_atk = TF.resize(cropped, [H_img, W_img])
                 
-                z_back, _ = net(x_atk, jac = False)
-                scale = SCALE_LOGIT / WM_STRENGTH
-                logits = torch.stack([z_back[:, ch]*scale for ch in wm_ch], 1)
-                target = (((wm_sign.sign().unsqueeze(0).unsqueeze(1))+1)*0.5).expand_as(logits)
-                wm_loss = F.binary_cross_entropy_with_logits(logits, target)
+                z_back, _ = net(x_atk, jac=False)
+                recovered_signal = z_back - z
+                
+                # [핵심 수정 2] wm_loss를 원래대로 Cosine Similarity 방식으로 되돌립니다.
+                B, C_wm, H_wm, W_wm = recovered_signal[:, wm_ch].shape
+                rec_flat = recovered_signal[:, wm_ch].reshape(B, -1)
+                tgt_flat = target_signal[:, wm_ch].reshape(B, -1)
+                cos_sim = F.cosine_similarity(rec_flat, tgt_flat, dim=1)
+                wm_loss = (1. - cos_sim).mean()
+                
+                loss += LAMBDA_DISTORTION * loss_distortion + BETA * wm_loss
 
-                # 최종 Phase B loss 값 결정 (중요)
-                loss += BETA * wm_loss
-
-            # gradient 초기화 -> gradient 계산 -> gradient clipping -> 파라미터 업데이트 -> epoch별 loss 집계
             opt.zero_grad()
             loss.backward()
-            torch.nn.utils.clip_grad_norm_(net.parameters(), max_norm=1.0)
+            torch.nn.utils.clip_grad_norm_(net.parameters(), max_norm=0.5)
             opt.step()
+            
             epoch_loss += loss.item() * x.size(0)
-
-        logger.info(f"[{tag}] Ep{ep:03d}/{EPOCHS} ({phase})"f"loss={epoch_loss/len(tensors):.4f}")
+        
+        epoch_loss_avg = epoch_loss / len(tensors)
+        log_beta = f"BETA={BETA:.2f}" if phase == 'B' else "BETA=0.00"
+        logger.info(f"[{tag}] Ep{ep:03d}/{EPOCHS} ({phase}) | loss={epoch_loss_avg:.4f} | {log_beta}")
+        
+        # [핵심 수정 3] 스케줄러를 if문 밖으로 빼내어 매 에포크마다 실행되도록 합니다.
+        scheduler.step(epoch_loss_avg)
 
     save_dir = os.path.join(MODEL_DIR, tag)
     os.makedirs(save_dir, exist_ok=True)
@@ -179,7 +175,7 @@ def train(tag, tensors, build_inn):
         torch.cuda.synchronize()
 
     elapsed = time.perf_counter() - t_start
-    logger.info(f"[{tag}] Training finished in {elapsed/60:.2f} min " f"({elapsed:.1f} s)")
+    logger.info(f"[{tag}] Training finished in {elapsed/60:.2f} min ({elapsed:.1f} s)")
 
     return net
 
@@ -257,14 +253,14 @@ def jpeg_tensor(x_bchw, q):
 # ────────── 실행 ──────────
 
 if __name__ == '__main__':
-    DS_BOTH = load_tensors('both')
-    DS_LH   = load_tensors('lh')    
-    DS_HL   = load_tensors('hl')     
+    #DS_BOTH = load_tensors('both')
+    #DS_LH   = load_tensors('lh')    
+    #DS_HL   = load_tensors('hl')     
     DS_FULL = load_tensors('full')   
 
-    train('both',  DS_BOTH, build_inn)  
-    train('lh',    DS_LH, build_inn)     
-    train('hl',    DS_HL, build_inn)     
+    #train('both',  DS_BOTH, build_inn)  
+    #train('lh',    DS_LH, build_inn)     
+    #train('hl',    DS_HL, build_inn)     
     train('full',  DS_FULL, build_inn)  
 
 '''
