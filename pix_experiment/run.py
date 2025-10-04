@@ -5,7 +5,7 @@ import torch
 import pandas as pd
 from PIL import Image
 from itertools import product
-import hashlib # ⭐ 수정: 누락된 hashlib 임포트
+import hashlib
 
 # --- 유틸리티 및 모듈 임포트 ---
 from attack_utils import setup_model_and_labels, preprocess_image, save_tensor_as_image
@@ -20,37 +20,36 @@ from evaluation import evaluate_performance
 CONFIG = {
     "input_dir": ["input_images"],
     "output_dir": ["output_images"],
-    "num_images_to_test": [1], # 0 이면 모든 이미지 다 쓸듯?
+    "num_images_to_test": [1],
     "attack_model_names": [['resnet50', 'vgg16']],
-
-    # --- PGD 하이퍼파라미터 ---
-    "epsilon": [4/255, 8/255],  # 총 변화량 한계. 공격의 '강도'와 '은밀함'을 결정하는 가장 중요한 값.
-                                # 값이 클수록 공격은 강해지지만 이미지 왜곡이 눈에 띌 수 있습니다. (예: 8/255 > 4/255)
-
-    "alpha": [2/255],           # 스텝 크기 (보폭). 한 번의 반복에서 이미지를 얼마나 크게 수정할지 결정합니다.
-                                # 공격의 '수렴 속도'와 '안정성'에 영향을 줍니다. 보통 epsilon보다 작은 값을 사용합니다.
-
-    "num_iter": [20, 40],       # 공격 반복 횟수. AI를 속이기 위해 이미지를 수정하는 과정을 몇 번 반복할지 결정합니다.
-                                # 값이 클수록 공격은 더 정교하고 강력해지지만, 생성 시간이 오래 걸립니다.
-
-    # --- EOT 하이퍼파라미터 ---
-    "eot_samples": [10],        # EOT 샘플링 횟수. 강인함(Robustness)을 기르기 위해 매 스텝마다 몇 개의 랜덤 왜곡을 적용해볼지 결정합니다.
-                                # 값이 클수록 JPEG 압축, 노이즈 등에 강인한 공격이 만들어지지만, 생성 속도가 매우 느려집니다.
-
-    # 3. 비밀 키 파라미터
-    "secret_key_strength": [0.1], # 비밀 키 적용 강도. 최종 이미지에 비밀 키 패턴을 얼마나 '진하게' 덧씌울지 결정합니다.
-                                 # 값이 크면 비밀 키의 보안성(내구성)은 높아지나, 이미지 품질(PSNR/SSIM)이 저하될 수 있습니다.
+    "epsilon": [8/255],
+    "alpha": [2/255],
+    "num_iter": [20],
+    "eot_samples": [10],
+    "secret_key_strength": [0.1],
 
     "evaluation_model_names": [[
+        # --- 기존 목록 ---
         'resnet50',          # 표준적인 현대 CNN
         'vgg16',             # 단순하고 깊은 고전적 CNN
         'mobilenet_v2',      # 모바일 기기를 위한 경량 CNN
         'efficientnet_b0',   # 효율적으로 설계된 최신 CNN
         'convnext_tiny',     # Transformer에 영감을 받은 최신 CNN
-        'vit_b_16'           # Vision Transformer (비-CNN 계열)
+        'vit_b_16',          # Vision Transformer (비-CNN 계열)
+        
+        # --- 🚀 추가된 강력한 CNN 계열 ---
+        'resnext50_32x4d',   # ResNet의 성능을 높인 확장판
+        'wide_resnet50_2',   # ResNet을 깊게 대신 넓게 만든 변형
+        
+        # --- 🧩 추가된 독특한 구조의 CNN 계열 ---
+        'densenet121',       # 특징 재사용을 극대화한 밀집 연결 구조
+        'inception_v3',      # 다양한 스케일의 특징을 동시에 분석
+        
+        # --- 🤖 추가된 최신 Transformer 계열 (timm 라이브러리 필요) ---
+        'swin_t',            # 계층적 구조를 도입한 효율적인 트랜스포머
+        'deit_base_patch16_224' # 증류(Distillation) 기법으로 학습 효율을 높인 트랜스포머
     ]],
-    
-    }
+}
 RESULTS_EXCEL_PATH = "experiment_results_summary.xlsx"
 # ==============================================================================
 
@@ -101,7 +100,6 @@ def main():
             print(f" -> Delta Tensor 생성 완료. Hash: {delta_hash[:16]}...")
             
             final_image_tensor = embed_secret(adversarial_tensor, pattern_key.cpu(), config["secret_key_strength"])
-            # (디버깅 편의를 위해 이미지 저장은 유지)
             save_tensor_as_image(original_tensor, os.path.join(config["output_dir"], f"original_{filename}"))
             save_tensor_as_image(final_image_tensor, os.path.join(config["output_dir"], f"attacked_{filename}"))
             

@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import random
-from attack_utils import DEVICE, evaluate_image_tensor
+from attack_utils import DEVICE 
 import torchvision.transforms.functional as TF
 from PIL import Image
 import io
@@ -38,14 +38,19 @@ eot_transforms = [
 ]
 
 def pgd_attack(models, labels, original_tensor, epsilon, alpha, num_iter, seed, eot_samples=10):
+    
+    from attack_utils import evaluate_image_tensor
 
     original_label, _ = evaluate_image_tensor(original_tensor, models[0], labels)
     try:
         original_label_idx = [int(k) for k, v in labels.items() if v == original_label][0]
-    except IndexError:
+    except (IndexError, KeyError): # KeyError 추가
+        print(f"경고: 원본 라벨 '{original_label}'을 라벨 목록에서 찾을 수 없습니다. 랜덤 타겟을 설정합니다.")
         original_label_idx = -1
-    random.seed(seed + original_label_idx)
+
+    random.seed(seed + (original_label_idx if original_label_idx != -1 else 0))
     num_classes = len(labels)
+    
     while True:
         target_label_idx = random.randint(0, num_classes - 1)
         if target_label_idx != original_label_idx:
@@ -54,10 +59,12 @@ def pgd_attack(models, labels, original_tensor, epsilon, alpha, num_iter, seed, 
     
     target = torch.tensor([target_label_idx]).to(DEVICE)
     loss_fn = nn.CrossEntropyLoss()
-    print(f" -> BPDA 기반 EOT 공격 목표 설정 완료: {target_label}")
+    print(f" -> BPDA 기반 EOT 공격 목표 설정 완료: {target_label} (원본: {original_label})")
 
     perturbed_tensor = original_tensor.clone().detach().to(DEVICE)
-    for i in range(num_iter):
+    
+    from tqdm import tqdm
+    for i in tqdm(range(num_iter), desc="PGD Attack"):
         perturbed_tensor.requires_grad = True
         
         total_eot_loss = 0
@@ -73,6 +80,7 @@ def pgd_attack(models, labels, original_tensor, epsilon, alpha, num_iter, seed, 
 
         for model in models:
             model.zero_grad()
+            
         avg_loss.backward()
         
         attack_update = alpha * perturbed_tensor.grad.sign()
