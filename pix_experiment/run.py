@@ -46,8 +46,8 @@ CONFIG = {
         'inception_v3',      # 다양한 스케일의 특징을 동시에 분석
         
         # --- 🤖 추가된 최신 Transformer 계열 (timm 라이브러리 필요) ---
-        'swin_t',            # 계층적 구조를 도입한 효율적인 트랜스포머
-        'deit_base_patch16_224' # 증류(Distillation) 기법으로 학습 효율을 높인 트랜스포머
+        'swin_tiny_patch4_window7_224', # Swin Transformer
+        'deit_base_patch16_224'         # DeiT (Data-efficient Image Transformer)
     ]],
 }
 RESULTS_EXCEL_PATH = "experiment_results_summary.xlsx"

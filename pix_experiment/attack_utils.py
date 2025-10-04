@@ -10,6 +10,11 @@ from skimage.metrics import peak_signal_noise_ratio as psnr
 from skimage.metrics import structural_similarity as ssim
 import torchvision.transforms.functional as TF
 import io
+# timm 라이브러리 임포트
+try:
+    import timm
+except ImportError:
+    timm = None
 
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else "cpu")
 
@@ -30,20 +35,37 @@ def gaussian_noise(tensor_image, std=0.05):
 def setup_model_and_labels(model_name="resnet50"):
     print(f' {model_name} 모델을 준비중')
     
-    if model_name == 'resnet50':
-        model = models.resnet50(weights='IMAGENET1K_V1')
-    elif model_name == 'vgg16':
-        model = models.vgg16(weights='IMAGENET1K_V1')
-    elif model_name == 'vit_b_16':
-        model = models.vit_b_16(weights='IMAGENET1K_V1')
-    elif model_name == 'mobilenet_v2':
-        model = models.mobilenet_v2(weights='IMAGENET1K_V1')
-    elif model_name == 'efficientnet_b0':
-        model = models.efficientnet_b0(weights='IMAGENET1K_V1')
-    elif model_name == 'convnext_tiny':
-        model = models.convnext_tiny(weights='IMAGENET1K_V1')
-    else:
-        raise ValueError(f"{model_name}은 지원하지 않음")
+    # --- ⭐ 2. 모델 로드 로직 수정: timm 연동 ---
+    try:
+        # 먼저 torchvision에서 모델을 찾아봅니다.
+        if model_name == 'resnet50':
+            model = models.resnet50(weights='IMAGENET1K_V1')
+        elif model_name == 'vgg16':
+            model = models.vgg16(weights='IMAGENET1K_V1')
+        elif model_name == 'vit_b_16':
+            model = models.vit_b_16(weights='IMAGENET1K_V1')
+        elif model_name == 'mobilenet_v2':
+            model = models.mobilenet_v2(weights='IMAGENET1K_V1')
+        elif model_name == 'efficientnet_b0':
+            model = models.efficientnet_b0(weights='IMAGENET1K_V1')
+        elif model_name == 'convnext_tiny':
+            model = models.convnext_tiny(weights='IMAGENET1K_V1')
+        elif model_name == 'resnext50_32x4d':
+            model = models.resnext50_32x4d(weights='IMAGENET1K_V1')
+        elif model_name == 'wide_resnet50_2':
+            model = models.wide_resnet50_2(weights='IMAGENET1K_V1')
+        elif model_name == 'densenet121':
+            model = models.densenet121(weights='IMAGENET1K_V1')
+        elif model_name == 'inception_v3':
+            model = models.inception_v3(weights='IMAGENET1K_V1')
+        else:
+            # torchvision에 없으면 timm에서 찾아서 불러옵니다.
+            print(f" -> torchvision에 없는 모델. timm 라이브러리에서 '{model_name}'을(를) 탐색합니다...")
+            model = timm.create_model(model_name, pretrained=True)
+
+    except Exception as e:
+        # timm에서도 모델을 찾지 못하면 에러를 발생시킵니다.
+        raise ValueError(f"'{model_name}' 모델을 torchvision 또는 timm에서 로드할 수 없습니다. 모델 이름을 확인해주세요. 에러: {e}")
     
     model.to(DEVICE)
     model.eval()
@@ -52,7 +74,6 @@ def setup_model_and_labels(model_name="resnet50"):
     LOCAL_LABELS_PATH = "imagenet_class_index.json"
     
     if os.path.exists(LOCAL_LABELS_PATH):
-        print(f" -> 로컬 라벨 파일 '{LOCAL_LABELS_PATH}'을(를) 로드합니다.")
         with open(LOCAL_LABELS_PATH, "r") as f:
             imagenet_labels = json.load(f)
     else:
@@ -73,7 +94,6 @@ def setup_model_and_labels(model_name="resnet50"):
 
     print("준비완료")
     return model, imagenet_labels
-
 
 def preprocess_image(pil_image):
     preprocess = transforms.Compose([
