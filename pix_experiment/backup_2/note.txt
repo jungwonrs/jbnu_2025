@@ -1,0 +1,43 @@
+[공격 목표 Target]
+1) VML (Vision-Language Model)
+1.1. LLaVA -v1.5-7B --> 70억 모델
+1.2. InstructBLIP
+1.3. CLIP (ViT-B/32) --> CLIP 의 기본 시각 인코더
+
+2) classifier (baseline) 계열
+2.1. ViT-B/32 --> Transformer 기반 분류기
+2.2. ResNet-50
+2.3. VGG16
+
+[중간 전이성 테스트]
+1) BLIP-2
+2) Fuyu-8B
+3) LLaVA-v1.5-13B --> 130억 모델
+4) CLIP (ViT-L/14)
+
+[최종목표]
+gemini, gpt-4v
+
+[공격방법]
+1. Fast Gradient Sign Method (FGSM)
+2. Projected Gradient Descent (PGD)
+3. Expectataion Overt Transformation (EOT)
+4. Backward Pass Differentiable Approximation (BPDA)
+5. Carlini & Wagner Attack (C&W Attack) 
+6. Simultaneous Perturbation Stochastic Approximation (SPSA)
+
+[비교군]
+Auto Attack 
+ -> APGD -CE
+ -> APGD-DLR
+ -> FAB
+ -> Square Attack
+
+
+Galze, Nightshade => data poisoning에 치중됨. 즉, 새로운 모델을 학습을 방해하는것이 목적임
+Stable Diffusion => Text-to-Image 로써 완전히 다른 느낌
+
+논문의 기여
+-> 현존하는 VML들을 속임으로써 이미지를 식별하지 못하게 만듬으로써 창작자의 권리를 보호
+-> AI가 저작물에 대한 정확한 정보를 제공하는 것을 차단함
+-> 내 그림이나 작품이 무엇인지 AI가 알려주지 못하게 함으로써 일반 사용자들이 내 저작물을 쉽게 식별하고 악용하는것을 어렵게 만듬
